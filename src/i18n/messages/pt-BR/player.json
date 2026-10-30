@@ -17,6 +17,8 @@
     "play": "Reproduzir",
     "rewind": "Voltar 10 segundos",
     "forward": "Avançar 10 segundos",
-    "unsupported": "Formato não suportado neste navegador."
+    "unsupported": "Formato não suportado neste navegador.",
+    "failedTitle": "Não foi possível reproduzir esta transmissão",
+    "retry": "Tentar novamente"
   }
 }

@@ -17,6 +17,8 @@
     "play": "Play",
     "rewind": "Back 10 seconds",
     "forward": "Forward 10 seconds",
-    "unsupported": "Format not supported by this browser."
+    "unsupported": "Format not supported by this browser.",
+    "failedTitle": "Unable to play this stream",
+    "retry": "Try again"
   }
 }

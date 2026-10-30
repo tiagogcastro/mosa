@@ -20,12 +20,14 @@ export function Player({
   type,
   position = 0,
   nextId,
+  compact = false,
 }: {
   id: string;
   title: string;
   type: string;
   position?: number;
   nextId?: string;
+  compact?: boolean;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const shaka = useRef<{ destroy: () => Promise<void> } | null>(null);
@@ -37,6 +39,7 @@ export function Player({
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [retry, setRetry] = useState(0);
   const saveProgress = useCallback(async () => {
     if (!video.current) {
       return;
@@ -80,6 +83,10 @@ export function Player({
         if (source.format === 'hls' && element.canPlayType('application/vnd.apple.mpegurl')) {
           element.src = source.url;
         } else if (source.format === 'direct') {
+          if (/\.(?:ts|mkv)(?:\?|$)/i.test(source.url)) {
+            setError(t('unsupported'));
+            return;
+          }
           element.src = source.url;
         } else {
           const shakaModule = await import('shaka-player');
@@ -103,9 +110,11 @@ export function Player({
             // The visible Play button allows playback after a user gesture.
           }
         }
-      } catch (reason) {
+      } catch {
         if (!disposed) {
-          setError(reason instanceof Error ? reason.message : t('error'));
+          // Shaka/network failures may be caused by CORS, credentials, segments or connectivity.
+          // Never display raw errors: they may contain private playback URLs.
+          setError(t('error'));
         }
       }
     }
@@ -124,7 +133,7 @@ export function Player({
         void player.destroy().catch(() => console.error('Could not dispose player'));
       }
     };
-  }, [id, position, saveProgress, t, type]);
+  }, [id, position, retry, saveProgress, t, type]);
   useEffect(() => {
     if (countdown === null || countdown <= 0) {
       return;
@@ -144,7 +153,7 @@ export function Player({
   }
   const control = 'rounded-lg p-2 text-foreground hover:bg-elevated';
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className={`flex flex-col bg-background ${compact ? '' : 'min-h-screen'}`}>
       <div className="flex h-16 items-center gap-4 px-4 md:px-8">
         <button
           onClick={() => {
@@ -158,7 +167,9 @@ export function Player({
         </button>
         <h1 className="line-clamp-1 font-heading font-semibold">{title}</h1>
       </div>
-      <div className="relative flex flex-1 items-center justify-center bg-black">
+      <div
+        className={`relative flex items-center justify-center bg-black ${compact ? 'aspect-video' : 'flex-1'}`}
+      >
         <video
           ref={video}
           playsInline
@@ -183,7 +194,19 @@ export function Player({
             role="alert"
             className="absolute inset-0 flex items-center justify-center bg-background/90 p-8 text-center text-[#e58b91]"
           >
-            {error}
+            <div className="max-w-md">
+              <h2 className="mb-2 font-heading text-xl font-bold">{t('failedTitle')}</h2>
+              <p className="text-sm text-muted">{error}</p>
+              <button
+                className="mt-5 rounded-lg bg-primary px-5 py-2 font-semibold text-background"
+                onClick={() => {
+                  setError('');
+                  setRetry((attempt) => attempt + 1);
+                }}
+              >
+                {t('retry')}
+              </button>
+            </div>
           </div>
         )}
         {countdown !== null && (

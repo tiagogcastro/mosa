@@ -17,6 +17,8 @@
     "play": "Reproducir",
     "rewind": "Retroceder 10 segundos",
     "forward": "Avanzar 10 segundos",
-    "unsupported": "Formato no compatible con este navegador."
+    "unsupported": "Formato no compatible con este navegador.",
+    "failedTitle": "No se puede reproducir esta señal",
+    "retry": "Intentar de nuevo"
   }
 }
