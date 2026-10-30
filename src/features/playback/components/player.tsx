@@ -21,6 +21,7 @@ export function Player({
   position = 0,
   nextId,
   compact = false,
+  onClose,
 }: {
   id: string;
   title: string;
@@ -28,6 +29,7 @@ export function Player({
   position?: number;
   nextId?: string;
   compact?: boolean;
+  onClose?: () => void;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const played = useRef(false);
@@ -159,7 +161,11 @@ export function Player({
         <button
           onClick={() => {
             void saveProgress();
-            router.back();
+            if (onClose) {
+              onClose();
+            } else {
+              router.back();
+            }
           }}
           className={control}
           aria-label={t('back')}

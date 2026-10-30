@@ -108,7 +108,7 @@ export function LiveTv({
           </nav>
         </section>
         <section
-          className="min-w-0 lg:sticky lg:top-24 lg:self-start"
+          className="order-first min-w-0 lg:order-none lg:sticky lg:top-24 lg:self-start"
           aria-label={t('selectChannel')}
         >
           {selected ? (
@@ -119,6 +119,7 @@ export function LiveTv({
                 title={selected.title}
                 type="live"
                 compact
+                onClose={() => setSelected(null)}
               />
               <p className="mt-3 text-sm text-muted">{t('unverified')}</p>
               {previous && (
