@@ -7,7 +7,8 @@ import { Player } from '@/features/playback/components/player';
 export const dynamic = 'force-dynamic';
 export default async function Page({ params }: PageProps<'/[locale]/watch/[type]/[id]'>) {
   const { id, type } = await params;
-  const row = mediaById(id);
+  const mediaId = decodeURIComponent(id);
+  const row = mediaById(mediaId);
   if (!row || row.item.type !== type || type === 'series') {
     notFound();
   }
@@ -28,6 +29,12 @@ export default async function Page({ params }: PageProps<'/[locale]/watch/[type]
           .get()
       : null;
   return (
-    <Player id={id} title={item.title} type={type} position={row.position || 0} nextId={next?.id} />
+    <Player
+      id={mediaId}
+      title={item.title}
+      type={type}
+      position={row.position || 0}
+      nextId={next?.id}
+    />
   );
 }
