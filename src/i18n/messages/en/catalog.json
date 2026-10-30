@@ -14,6 +14,17 @@
     "continue": "Continue watching",
     "noContent": "Connect a source to see content here.",
     "watch": "Watch now",
-    "recent": "Recent"
+    "recent": "Recent",
+    "importedCount": "{count} imported · playback unverified",
+    "pages": "Catalog pages",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageOf": "Page {page} of {total}",
+    "viewAll": "View all",
+    "selectChannel": "Select a channel to try playback",
+    "channelSearch": "Search channels",
+    "unverified": "Listed by provider · playback unverified",
+    "noEpisodes": "No episodes are available from this source yet. Playback is not available.",
+    "episodeError": "Could not load episodes from this provider. Try opening this page again later."
   }
 }

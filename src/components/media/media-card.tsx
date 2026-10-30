@@ -1,7 +1,6 @@
-import { Film, Tv } from 'lucide-react';
-import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { FavoriteButton } from '@/components/media/favorite-button';
+import { MediaArtwork } from '@/components/media/media-artwork';
 import { media } from '@/db/schema';
 
 type Item = typeof media.$inferSelect;
@@ -26,25 +25,7 @@ export function MediaCard({
         <div
           className={`relative overflow-hidden rounded-xl border border-border bg-surface ${item.type === 'live' ? 'aspect-video' : 'aspect-[2/3]'}`}
         >
-          {item.artwork ? (
-            <Image
-              src={item.artwork}
-              alt=""
-              fill
-              unoptimized
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 200px"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            />
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-4 bg-gradient-to-br from-surface to-elevated p-5 text-center">
-              <span className="text-primary/60">
-                {item.type === 'live' ? <Tv size={32} /> : <Film size={32} />}
-              </span>
-              <span className="font-heading text-base font-semibold text-foreground/80">
-                {item.title}
-              </span>
-            </div>
-          )}
+          <MediaArtwork title={item.title} artwork={item.artwork} channel={item.type === 'live'} />
           {!!position && !!duration && (
             <div className="absolute inset-x-0 bottom-0 h-1 bg-border">
               <div

@@ -14,6 +14,17 @@
     "continue": "Continuar assistindo",
     "noContent": "Conecte uma fonte para ver conteúdo aqui.",
     "watch": "Assistir agora",
-    "recent": "Recentes"
+    "recent": "Recentes",
+    "importedCount": "{count} importados · reprodução não verificada",
+    "pages": "Páginas do catálogo",
+    "previousPage": "Anterior",
+    "nextPage": "Próxima",
+    "pageOf": "Página {page} de {total}",
+    "viewAll": "Ver todos",
+    "selectChannel": "Selecione um canal para tentar reproduzir",
+    "channelSearch": "Buscar canais",
+    "unverified": "Listado pela fonte · reprodução não verificada",
+    "noEpisodes": "Esta fonte ainda não oferece episódios. A reprodução não está disponível.",
+    "episodeError": "Não foi possível carregar os episódios desta fonte. Abra esta página novamente mais tarde."
   }
 }

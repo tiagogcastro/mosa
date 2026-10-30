@@ -1,9 +1,10 @@
 'use client';
 import Image from 'next/image';
-import { Clapperboard, Heart, House, MonitorPlay, Search, Settings, Tv, X } from 'lucide-react';
+import { Clapperboard, Heart, House, MonitorPlay, Search, Settings, Tv } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Link, usePathname } from '@/i18n/navigation';
+import { GlobalSearch } from '@/components/common/global-search';
 
 const links = [
   { href: '/', key: 'home', Icon: House },
@@ -78,24 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
       </header>
-      {isSearchOpen && (
-        <div className="sticky top-16 z-20 flex gap-2 border-b border-border bg-surface p-3 md:px-8">
-          <form action="/movies" className="flex flex-1 gap-2">
-            <input
-              name="q"
-              autoFocus
-              placeholder={commonTranslations('search')}
-              className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground"
-            />
-            <button className="rounded-lg bg-primary px-4 text-background">
-              <Search size={18} />
-            </button>
-          </form>
-          <button onClick={() => setIsSearchOpen(false)} aria-label={commonTranslations('cancel')}>
-            <X />
-          </button>
-        </div>
-      )}
+      {isSearchOpen && <GlobalSearch close={() => setIsSearchOpen(false)} />}
       <main className="mx-auto min-h-[calc(100vh-64px)] max-w-[1600px] px-4 pb-28 pt-8 md:px-8 md:pb-12">
         {children}
       </main>

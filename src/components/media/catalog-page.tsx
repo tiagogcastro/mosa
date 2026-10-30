@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { catalog } from '@/features/catalog/queries';
+import { catalog, catalogCategories, catalogCount } from '@/features/catalog/queries';
 import { MediaSection } from '@/components/media/media-section';
 
 export async function CatalogPage({
@@ -13,20 +13,31 @@ export async function CatalogPage({
   const query = await searchParams;
   const t = await getTranslations('Catalog');
   const section = type === 'movie' ? 'movies' : type === 'series' ? 'series' : 'live';
-  const items = catalog(type, query.q || '', query.category || '', Number(query.page) || 1);
-  const categories = [
-    ...new Set(
-      catalog(type, '', '', 1)
-        .map((row) => row.item.category)
-        .filter(Boolean),
-    ),
-  ] as string[];
+  const total = catalogCount(type, query.q || '', query.category || '');
+  const lastPage = Math.max(1, Math.ceil(total / 48));
+  const requestedPage = Number(query.page);
+  const page = Number.isSafeInteger(requestedPage)
+    ? Math.min(lastPage, Math.max(1, requestedPage))
+    : 1;
+  const items = catalog(type, query.q || '', query.category || '', page);
+  const categories = catalogCategories(type);
+  function pageHref(target: number) {
+    const params = new URLSearchParams();
+    if (query.q) {
+      params.set('q', query.q);
+    }
+    if (query.category) {
+      params.set('category', query.category);
+    }
+    params.set('page', String(target));
+    return `/${section}?${params}`;
+  }
   return (
     <>
       <div className="mb-8">
         <h1 className="text-3xl font-bold">{t(section)}</h1>
         <p className="mt-2 text-muted">
-          {items.length ? `${items.length} ${t(section).toLowerCase()}` : t('noContent')}
+          {total ? t('importedCount', { count: total }) : t('noContent')}
         </p>
       </div>
       <form className="mb-8 flex flex-wrap gap-3">
@@ -45,7 +56,9 @@ export async function CatalogPage({
         >
           <option value="">{t('allCategories')}</option>
           {categories.map((category) => (
-            <option key={category}>{category}</option>
+            <option key={category.name} value={category.name}>
+              {category.name} ({category.count})
+            </option>
           ))}
         </select>
         <button className="h-11 rounded-lg bg-primary px-5 font-semibold text-background">
@@ -59,24 +72,19 @@ export async function CatalogPage({
           {t('noResults')}
         </p>
       )}
-      <div className="flex gap-3">
-        {Number(query.page) > 1 && (
-          <Link
-            className="rounded-lg border border-border px-4 py-2"
-            href={`/${section}?page=${Number(query.page) - 1}&q=${encodeURIComponent(query.q || '')}&category=${encodeURIComponent(query.category || '')}`}
-          >
-            ←
+      <nav aria-label={t('pages')} className="mt-8 flex items-center gap-3">
+        {page > 1 && (
+          <Link className="rounded-lg border border-border px-4 py-2" href={pageHref(page - 1)}>
+            ← {t('previousPage')}
           </Link>
         )}
-        {items.length === 48 && (
-          <Link
-            className="rounded-lg border border-border px-4 py-2"
-            href={`/${section}?page=${(Number(query.page) || 1) + 1}&q=${encodeURIComponent(query.q || '')}&category=${encodeURIComponent(query.category || '')}`}
-          >
-            →
+        <span className="text-sm text-muted">{t('pageOf', { page, total: lastPage })}</span>
+        {page < lastPage && (
+          <Link className="rounded-lg border border-border px-4 py-2" href={pageHref(page + 1)}>
+            {t('nextPage')} →
           </Link>
         )}
-      </div>
+      </nav>
     </>
   );
 }
