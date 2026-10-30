@@ -1,0 +1,22 @@
+{
+  "Player": {
+    "title": "Reprodução",
+    "loading": "Preparando vídeo…",
+    "unavailable": "Esta fonte não pode ser reproduzida no navegador.",
+    "error": "Não foi possível reproduzir este vídeo. Verifique a conexão e a compatibilidade do navegador.",
+    "back": "Fechar player",
+    "previous": "Canal anterior",
+    "next": "Próximo episódio",
+    "playNow": "Reproduzir agora",
+    "cancelNext": "Cancelar",
+    "fullscreen": "Tela cheia",
+    "pip": "Imagem em imagem",
+    "mute": "Silenciar",
+    "unmute": "Ativar som",
+    "pause": "Pausar",
+    "play": "Reproduzir",
+    "rewind": "Voltar 10 segundos",
+    "forward": "Avançar 10 segundos",
+    "unsupported": "Formato não suportado neste navegador."
+  }
+}

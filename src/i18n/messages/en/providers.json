@@ -1,0 +1,27 @@
+{
+  "Providers": {
+    "title": "Your sources",
+    "intro": "Connect your authorized playlist. Mosa does not provide content.",
+    "name": "Connection name",
+    "server": "Server URL",
+    "username": "Username",
+    "password": "Password",
+    "playlist": "M3U playlist URL",
+    "file": "Local M3U file",
+    "type": "Connection type",
+    "check": "Check connection",
+    "save": "Save and import",
+    "checking": "Checking…",
+    "importing": "Importing…",
+    "connected": "Connection valid",
+    "invalid": "Could not validate source.",
+    "remove": "Remove source",
+    "refresh": "Refresh catalog",
+    "demo": "Enable demo",
+    "demoNote": "Synthetic content with an authorized demo video.",
+    "noPassword": "Leave blank to keep the current password",
+    "limit": "Imports are limited to 20,000 entries and 8 MB.",
+    "disable": "Disable",
+    "enable": "Enable"
+  }
+}

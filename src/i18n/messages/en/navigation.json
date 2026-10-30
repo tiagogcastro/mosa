@@ -1,0 +1,12 @@
+{
+  "Navigation": {
+    "home": "Home",
+    "live": "Live TV",
+    "movies": "Movies",
+    "series": "Series",
+    "library": "My library",
+    "settings": "Settings",
+    "connect": "Add source",
+    "brand": "Mosa"
+  }
+}

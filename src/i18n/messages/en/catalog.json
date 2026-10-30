@@ -1,0 +1,19 @@
+{
+  "Catalog": {
+    "live": "Live TV",
+    "movies": "Movies",
+    "series": "Series",
+    "library": "My library",
+    "noResults": "No results found",
+    "filter": "Filter by title",
+    "allCategories": "All categories",
+    "episodes": "Episodes",
+    "season": "Season",
+    "provider": "Source",
+    "watched": "Watched",
+    "continue": "Continue watching",
+    "noContent": "Connect a source to see content here.",
+    "watch": "Watch now",
+    "recent": "Recent"
+  }
+}

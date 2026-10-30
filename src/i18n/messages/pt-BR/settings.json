@@ -1,0 +1,15 @@
+{
+  "Settings": {
+    "title": "Configurações",
+    "language": "Idioma da interface",
+    "general": "Geral",
+    "providers": "Fontes",
+    "privacy": "Privacidade",
+    "about": "Sobre",
+    "description": "O Mosa armazena seu catálogo e histórico localmente.",
+    "history": "Apagar histórico",
+    "confirmHistory": "Apagar todo o histórico? Os favoritos serão mantidos.",
+    "version": "Versão 0.1.0",
+    "local": "Aplicativo local. Nenhum serviço de streaming é fornecido."
+  }
+}

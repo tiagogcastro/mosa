@@ -1,0 +1,15 @@
+{
+  "Settings": {
+    "title": "Settings",
+    "language": "Interface language",
+    "general": "General",
+    "providers": "Sources",
+    "privacy": "Privacy",
+    "about": "About",
+    "description": "Mosa stores your catalog and history locally.",
+    "history": "Clear history",
+    "confirmHistory": "Clear all history? Favorites will be kept.",
+    "version": "Version 0.1.0",
+    "local": "Local application. No streaming service is provided."
+  }
+}

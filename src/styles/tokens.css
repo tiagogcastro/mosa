@@ -1,0 +1,12 @@
+:root {
+  --background: #0f1319;
+  --surface: #191f28;
+  --surface-elevated: #232b36;
+  --primary: #8fb4ea;
+  --primary-hover: #b7cdf2;
+  --foreground: #f3f6fa;
+  --foreground-muted: #b3beca;
+  --border: #323d49;
+  --error: #e58b91;
+  --success: #78c6a3;
+}

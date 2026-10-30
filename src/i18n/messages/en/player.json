@@ -1,0 +1,22 @@
+{
+  "Player": {
+    "title": "Playback",
+    "loading": "Preparing video…",
+    "unavailable": "This source cannot be played in the browser.",
+    "error": "Could not play this video. Check your connection and browser compatibility.",
+    "back": "Close player",
+    "previous": "Previous channel",
+    "next": "Next episode",
+    "playNow": "Play now",
+    "cancelNext": "Cancel",
+    "fullscreen": "Fullscreen",
+    "pip": "Picture in picture",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "pause": "Pause",
+    "play": "Play",
+    "rewind": "Back 10 seconds",
+    "forward": "Forward 10 seconds",
+    "unsupported": "Format not supported by this browser."
+  }
+}

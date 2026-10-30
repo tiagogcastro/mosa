@@ -1,0 +1,27 @@
+{
+  "Providers": {
+    "title": "Tus fuentes",
+    "intro": "Conecta tu lista autorizada. Mosa no proporciona contenido.",
+    "name": "Nombre de conexión",
+    "server": "URL del servidor",
+    "username": "Usuario",
+    "password": "Contraseña",
+    "playlist": "URL de la lista M3U",
+    "file": "Archivo M3U local",
+    "type": "Tipo de conexión",
+    "check": "Verificar conexión",
+    "save": "Guardar e importar",
+    "checking": "Verificando…",
+    "importing": "Importando…",
+    "connected": "Conexión válida",
+    "invalid": "No se pudo validar la fuente.",
+    "remove": "Eliminar fuente",
+    "refresh": "Actualizar catálogo",
+    "demo": "Activar demostración",
+    "demoNote": "Contenido ficticio con video de demostración autorizado.",
+    "noPassword": "Déjalo vacío para mantener la contraseña actual",
+    "limit": "La importación admite hasta 20.000 entradas y 8 MB.",
+    "disable": "Desactivar",
+    "enable": "Activar"
+  }
+}

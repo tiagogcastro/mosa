@@ -1,0 +1,15 @@
+{
+  "Settings": {
+    "title": "Configuración",
+    "language": "Idioma de la interfaz",
+    "general": "General",
+    "providers": "Fuentes",
+    "privacy": "Privacidad",
+    "about": "Acerca de",
+    "description": "Mosa guarda tu catálogo e historial localmente.",
+    "history": "Borrar historial",
+    "confirmHistory": "¿Borrar todo el historial? Se conservarán los favoritos.",
+    "version": "Versión 0.1.0",
+    "local": "Aplicación local. No se proporciona ningún servicio de streaming."
+  }
+}

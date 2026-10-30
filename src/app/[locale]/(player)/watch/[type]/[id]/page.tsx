@@ -1,0 +1,33 @@
+import { notFound } from 'next/navigation';
+import { and, eq, gt } from 'drizzle-orm';
+import { db } from '@/db/client';
+import { media } from '@/db/schema';
+import { mediaById } from '@/features/catalog/queries';
+import { Player } from '@/features/playback/components/player';
+export const dynamic = 'force-dynamic';
+export default async function Page({ params }: PageProps<'/[locale]/watch/[type]/[id]'>) {
+  const { id, type } = await params;
+  const row = mediaById(id);
+  if (!row || row.item.type !== type || type === 'series') {
+    notFound();
+  }
+  const item = row.item;
+  const next =
+    type === 'episode' && item.parentId && item.episode
+      ? db
+          .select()
+          .from(media)
+          .where(
+            and(
+              eq(media.parentId, item.parentId),
+              eq(media.season, item.season || 1),
+              gt(media.episode, item.episode),
+            ),
+          )
+          .orderBy(media.episode)
+          .get()
+      : null;
+  return (
+    <Player id={id} title={item.title} type={type} position={row.position || 0} nextId={next?.id} />
+  );
+}

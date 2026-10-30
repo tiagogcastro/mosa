@@ -1,0 +1,19 @@
+{
+  "Catalog": {
+    "live": "TV en vivo",
+    "movies": "Películas",
+    "series": "Series",
+    "library": "Mi biblioteca",
+    "noResults": "No se encontraron resultados",
+    "filter": "Filtrar por título",
+    "allCategories": "Todas las categorías",
+    "episodes": "Episodios",
+    "season": "Temporada",
+    "provider": "Fuente",
+    "watched": "Vistos",
+    "continue": "Seguir viendo",
+    "noContent": "Conecta una fuente para ver contenido aquí.",
+    "watch": "Ver ahora",
+    "recent": "Recientes"
+  }
+}

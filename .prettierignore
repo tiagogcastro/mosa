@@ -1,0 +1,9 @@
+node_modules/
+.next/
+data/
+src/db/migrations/
+pnpm-lock.yaml
+next-env.d.ts
+*.db
+*.db-shm
+*.db-wal

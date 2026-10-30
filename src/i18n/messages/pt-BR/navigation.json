@@ -1,0 +1,12 @@
+{
+  "Navigation": {
+    "home": "Início",
+    "live": "TV ao vivo",
+    "movies": "Filmes",
+    "series": "Séries",
+    "library": "Minha biblioteca",
+    "settings": "Configurações",
+    "connect": "Adicionar fonte",
+    "brand": "Mosa"
+  }
+}

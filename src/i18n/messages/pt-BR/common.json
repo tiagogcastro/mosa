@@ -1,0 +1,20 @@
+{
+  "Common": {
+    "search": "Buscar conteúdo",
+    "all": "Todos",
+    "play": "Assistir",
+    "resume": "Continuar",
+    "favorite": "Favorito",
+    "addFavorite": "Adicionar aos favoritos",
+    "removeFavorite": "Remover dos favoritos",
+    "back": "Voltar",
+    "loading": "Carregando…",
+    "empty": "Nada por aqui ainda",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "remove": "Remover",
+    "error": "Algo deu errado",
+    "demo": "Explorar demonstração",
+    "details": "Ver detalhes"
+  }
+}

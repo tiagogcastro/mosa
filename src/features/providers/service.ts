@@ -1,0 +1,160 @@
+import 'server-only';
+import { randomUUID } from 'node:crypto';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
+import { db } from '@/db/client';
+import { media, providers } from '@/db/schema';
+import { encrypt, decrypt } from '@/lib/security/crypto';
+import { fetchRemote } from '@/lib/security/remote';
+import type { ImportItem } from '@/features/catalog/normalize';
+import type { Result } from '@/lib/result';
+import { parseM3u } from '@/features/providers/adapters/m3u';
+import {
+  checkXtream,
+  importXtream,
+  xtreamSource,
+  xtreamConfig,
+  type XtreamConfig,
+} from '@/features/providers/adapters/xtream';
+
+export const connectionSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('xtream'),
+    name: z.string().trim().min(1).max(80),
+    server: z.url(),
+    username: z.string().min(1),
+    password: z.string().min(1),
+  }),
+  z
+    .object({
+      type: z.literal('m3u'),
+      name: z.string().trim().min(1).max(80),
+      url: z.url().optional(),
+      content: z
+        .string()
+        .max(8 * 1024 * 1024)
+        .optional(),
+    })
+    .refine((value) => !!(value.url || value.content), 'Playlist required'),
+]);
+export type Connection = z.infer<typeof connectionSchema>;
+export async function inspectConnection(config: Connection) {
+  if (config.type === 'xtream') {
+    return checkXtream(xtreamConfig.parse(config));
+  }
+  const playlist = config.content ?? (config.url ? await fetchRemote(config.url) : '');
+  const items = parseM3u(playlist);
+  return { count: items.length };
+}
+export async function importConnection(config: Connection) {
+  let items: ImportItem[];
+
+  if (config.type === 'xtream') {
+    await checkXtream(config);
+    items = await importXtream(config);
+  } else {
+    const playlist = config.content ?? (config.url ? await fetchRemote(config.url) : '');
+    items = parseM3u(playlist);
+  }
+
+  const providerId = randomUUID();
+  db.transaction((tx) => {
+    tx.insert(providers)
+      .values({
+        id: providerId,
+        name: config.name,
+        type: config.type,
+        encryptedConfig: encrypt(
+          config.type === 'm3u' && config.content ? { type: 'm3u', local: true } : config,
+        ),
+        syncedAt: new Date(),
+      })
+      .run();
+    insertItems(tx, providerId, items);
+  });
+  return { id: providerId, count: items.length };
+}
+type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+function insertItems(tx: Transaction, providerId: string, items: ImportItem[]) {
+  for (let index = 0; index < items.length; index += 200) {
+    tx.insert(media)
+      .values(
+        items.slice(index, index + 200).map((item) => ({
+          id: `${providerId}:${item.type}:${item.externalId}`,
+          providerId,
+          externalId: item.externalId,
+          type: item.type,
+          title: item.title,
+          originalTitle: item.originalTitle,
+          category: item.category,
+          artwork: item.artwork,
+          description: item.description,
+          year: item.year,
+          parentId: item.parentId,
+          season: item.season,
+          episode: item.episode,
+          extension: item.extension,
+          sourceUrl: item.sourceUrl ? encrypt(item.sourceUrl) : undefined,
+          addedAt: new Date(),
+        })),
+      )
+      .onConflictDoNothing()
+      .run();
+  }
+}
+export async function refreshProvider(providerId: string): Promise<Result<{ count: number }>> {
+  const provider = db.select().from(providers).where(eq(providers.id, providerId)).get();
+  if (!provider || provider.type === 'demo') {
+    return { success: false, error: 'PROVIDER_NOT_FOUND' };
+  }
+  const config = decrypt<Connection | { local: true }>(provider.encryptedConfig);
+  if ('local' in config) {
+    return { success: false, error: 'LOCAL_FILE_REQUIRED' };
+  }
+  if (config.type === 'm3u' && !config.url) {
+    return { success: false, error: 'INVALID_INPUT' };
+  }
+  const items =
+    config.type === 'xtream'
+      ? await importXtream(config)
+      : parseM3u(await fetchRemote(config.url ?? ''));
+  db.transaction((tx) => {
+    insertItems(tx, providerId, items);
+    tx.update(providers)
+      .set({ syncedAt: new Date(), status: 'ready' })
+      .where(eq(providers.id, providerId))
+      .run();
+  });
+  return { success: true, data: { count: items.length } };
+}
+export function resolveSource(mediaId: string): Result<{ url: string; format: string }> {
+  const item = db.select().from(media).where(eq(media.id, mediaId)).get();
+  if (!item) {
+    return { success: false, error: 'MEDIA_NOT_FOUND' };
+  }
+  const provider = db.select().from(providers).where(eq(providers.id, item.providerId)).get();
+  if (!provider?.enabled) {
+    return { success: false, error: 'SOURCE_UNAVAILABLE' };
+  }
+  let url = item.sourceUrl;
+  if (provider.type === 'm3u' && url) {
+    url = decrypt<string>(url);
+  }
+  if (provider.type === 'xtream') {
+    url = xtreamSource(
+      decrypt<XtreamConfig>(provider.encryptedConfig),
+      item.type,
+      item.externalId,
+      item.extension || 'mp4',
+    );
+  }
+  if (!url) {
+    return { success: false, error: 'SOURCE_UNAVAILABLE' };
+  }
+  const format = /\.m3u8(?:\?|$)/i.test(url)
+    ? 'hls'
+    : /\.mpd(?:\?|$)/i.test(url)
+      ? 'dash'
+      : 'direct';
+  return { success: true, data: { url, format } };
+}

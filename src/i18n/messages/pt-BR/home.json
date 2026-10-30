@@ -1,0 +1,13 @@
+{
+  "Home": {
+    "welcome": "Seu espaço para assistir",
+    "intro": "Conecte sua própria fonte ou explore a demonstração para começar.",
+    "continue": "Continue assistindo",
+    "recent": "Canais recentes",
+    "favorites": "Seus favoritos",
+    "discover": "Descubra no Mosa",
+    "recentlyAdded": "Adicionados ao catálogo",
+    "noProvider": "Tudo pronto para começar",
+    "noProviderText": "O Mosa organiza as fontes que você escolher. Seus dados ficam no seu dispositivo."
+  }
+}

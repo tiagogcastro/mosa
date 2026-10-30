@@ -1,0 +1,13 @@
+{
+  "Home": {
+    "welcome": "Your place to watch",
+    "intro": "Connect your own source or explore the demo to get started.",
+    "continue": "Continue watching",
+    "recent": "Recent channels",
+    "favorites": "Your favorites",
+    "discover": "Discover on Mosa",
+    "recentlyAdded": "Added to catalog",
+    "noProvider": "Ready when you are",
+    "noProviderText": "Mosa organizes the sources you choose. Your data stays on your device."
+  }
+}
