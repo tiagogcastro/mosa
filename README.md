@@ -34,7 +34,7 @@ Run `pnpm db:generate` after schema changes; commit migrations and apply them wi
 
 Playback depends on browser codecs, CORS, provider authentication, HTTPS compatibility, and supported manifests. No DRM bypass, transcoding, or video relay is provided. Source URLs returned to the browser may contain provider credentials; use Mosa only on a trusted local device and do not share playback requests. Remote provider destinations are restricted against common private-address targets, but DNS rebinding and provider-hosted assets require additional hardening before any LAN or cloud deployment. Keep the application bound to localhost.
 
-The database, generated secret, and local history are ignored by Git. The demo uses synthetic titles and a CC0 video from MDN; these titles are illustrative, not a film library. No real provider credentials are needed for CI.
+The database, generated secret, and local history are ignored by Git. New demo installs contain one clearly labeled CC0 MDN video sample, not a film library. Previously installed illustrative demo entries remain in existing databases to preserve favorites and history. No real provider credentials are needed for CI.
 
 ## Project structure
 

@@ -6,7 +6,15 @@ type Row = {
   position: number | null;
   duration: number | null;
 };
-export function MediaSection({ title, items }: { title: string; items: Row[] }) {
+export function MediaSection({
+  title,
+  items,
+  returnTo,
+}: {
+  title: string;
+  items: Row[];
+  returnTo?: string;
+}) {
   if (!items.length) {
     return null;
   }
@@ -21,6 +29,7 @@ export function MediaSection({ title, items }: { title: string; items: Row[] }) 
             favorite={!!favorite}
             position={position}
             duration={duration}
+            returnTo={returnTo}
           />
         ))}
       </div>

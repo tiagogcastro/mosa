@@ -6,7 +6,15 @@ import { MediaArtwork } from '@/components/media/media-artwork';
 import { Link } from '@/i18n/navigation';
 import { FavoriteButton } from '@/components/media/favorite-button';
 
-export async function DetailPage({ id, type }: { id: string; type: 'movie' | 'series' }) {
+export async function DetailPage({
+  id,
+  type,
+  from,
+}: {
+  id: string;
+  type: 'movie' | 'series';
+  from?: string;
+}) {
   const result = mediaById(id);
   if (!result || result.item.type !== type) {
     notFound();
@@ -26,7 +34,13 @@ export async function DetailPage({ id, type }: { id: string; type: 'movie' | 'se
   return (
     <>
       <Link
-        href={type === 'movie' ? '/movies' : '/series'}
+        href={
+          from?.startsWith(type === 'movie' ? '/movies?' : '/series?')
+            ? from
+            : type === 'movie'
+              ? '/movies'
+              : '/series'
+        }
         className="mb-8 inline-block text-sm text-muted hover:text-primary"
       >
         ← {t(type === 'movie' ? 'movies' : 'series')}

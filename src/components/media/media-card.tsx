@@ -9,19 +9,25 @@ export function MediaCard({
   favorite,
   position,
   duration,
+  returnTo,
 }: {
   item: Item;
   favorite: boolean;
   position?: number | null;
   duration?: number | null;
+  returnTo?: string;
 }) {
   const destination =
     item.type === 'live' || item.type === 'episode'
       ? `/watch/${item.type}/${encodeURIComponent(item.id)}`
       : `/${item.type === 'movie' ? 'movies' : 'series'}/${encodeURIComponent(item.id)}`;
+  const href =
+    returnTo && item.type !== 'live' && item.type !== 'episode'
+      ? `${destination}?from=${encodeURIComponent(returnTo)}`
+      : destination;
   return (
     <article className="group relative min-w-0">
-      <Link href={destination} className="block">
+      <Link href={href} className="block">
         <div
           className={`relative overflow-hidden rounded-xl border border-border bg-surface ${item.type === 'live' ? 'aspect-video' : 'aspect-[2/3]'}`}
         >

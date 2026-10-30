@@ -32,6 +32,7 @@ export async function CatalogPage({
     params.set('page', String(target));
     return `/${section}?${params}`;
   }
+  const returnTo = pageHref(page);
   return (
     <>
       <div className="mb-8">
@@ -66,7 +67,7 @@ export async function CatalogPage({
         </button>
       </form>
       {items.length ? (
-        <MediaSection title={t(section)} items={items} />
+        <MediaSection title={t(section)} items={items} returnTo={returnTo} />
       ) : (
         <p className="rounded-xl border border-border bg-surface p-8 text-muted">
           {t('noResults')}

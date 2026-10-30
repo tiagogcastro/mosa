@@ -30,6 +30,7 @@ export function Player({
   compact?: boolean;
 }) {
   const video = useRef<HTMLVideoElement>(null);
+  const played = useRef(false);
   const shaka = useRef<{ destroy: () => Promise<void> } | null>(null);
   const t = useTranslations('Player');
   const router = useRouter();
@@ -41,7 +42,7 @@ export function Player({
   const [countdown, setCountdown] = useState<number | null>(null);
   const [retry, setRetry] = useState(0);
   const saveProgress = useCallback(async () => {
-    if (!video.current) {
+    if (!video.current || !played.current) {
       return;
     }
     const element: HTMLVideoElement = video.current;
@@ -174,12 +175,19 @@ export function Player({
           ref={video}
           playsInline
           className="max-h-[75vh] w-full"
-          onPlay={() => setPlaying(true)}
+          onPlay={() => {
+            setPlaying(true);
+          }}
           onPause={() => {
             setPlaying(false);
             void saveProgress();
           }}
-          onTimeUpdate={(event) => setCurrent(event.currentTarget.currentTime)}
+          onTimeUpdate={(event) => {
+            if (event.currentTarget.currentTime > 0) {
+              played.current = true;
+            }
+            setCurrent(event.currentTarget.currentTime);
+          }}
           onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
           onEnded={() => {
             void saveProgress();
