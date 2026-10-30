@@ -1,6 +1,6 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db/client';
 import { media, providers } from '@/db/schema';
@@ -15,6 +15,7 @@ import {
   xtreamSource,
   xtreamConfig,
   type XtreamConfig,
+  xtreamEpisodes,
 } from '@/features/providers/adapters/xtream';
 
 export const connectionSchema = z.discriminatedUnion('type', [
@@ -98,7 +99,19 @@ function insertItems(tx: Transaction, providerId: string, items: ImportItem[]) {
           addedAt: new Date(),
         })),
       )
-      .onConflictDoNothing()
+      .onConflictDoUpdate({
+        target: media.id,
+        set: {
+          title: sql`excluded.title`,
+          originalTitle: sql`excluded.original_title`,
+          description: sql`excluded.description`,
+          category: sql`excluded.category`,
+          artwork: sql`excluded.artwork`,
+          year: sql`excluded.year`,
+          extension: sql`excluded.extension`,
+          sourceUrl: sql`excluded.source_url`,
+        },
+      })
       .run();
   }
 }
@@ -157,4 +170,42 @@ export function resolveSource(mediaId: string): Result<{ url: string; format: st
       ? 'dash'
       : 'direct';
   return { success: true, data: { url, format } };
+}
+export async function loadSeriesEpisodes(seriesId: string) {
+  const series = db.select().from(media).where(eq(media.id, seriesId)).get();
+  if (!series || series.type !== 'series') {
+    return [];
+  }
+  const provider = db.select().from(providers).where(eq(providers.id, series.providerId)).get();
+  const existing = db.select().from(media).where(eq(media.parentId, seriesId)).all();
+  if (!provider?.enabled || provider.type !== 'xtream' || existing.length) {
+    return existing;
+  }
+  const items = await xtreamEpisodes(
+    decrypt<XtreamConfig>(provider.encryptedConfig),
+    series.externalId,
+  );
+  db.transaction((tx) => {
+    for (const item of items) {
+      tx.insert(media)
+        .values({
+          id: `${series.providerId}:episode:${item.externalId}`,
+          providerId: series.providerId,
+          externalId: item.externalId,
+          type: 'episode',
+          title: item.title,
+          originalTitle: item.originalTitle,
+          description: item.description,
+          artwork: item.artwork,
+          parentId: seriesId,
+          season: item.season,
+          episode: item.episode,
+          extension: item.extension,
+          addedAt: new Date(),
+        })
+        .onConflictDoNothing()
+        .run();
+    }
+  });
+  return db.select().from(media).where(eq(media.parentId, seriesId)).all();
 }

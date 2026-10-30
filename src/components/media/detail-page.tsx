@@ -1,9 +1,8 @@
 import { notFound } from 'next/navigation';
-import { eq } from 'drizzle-orm';
 import { getTranslations } from 'next-intl/server';
-import { db } from '@/db/client';
-import { media } from '@/db/schema';
 import { mediaById } from '@/features/catalog/queries';
+import { loadSeriesEpisodes } from '@/features/providers/service';
+import { MediaArtwork } from '@/components/media/media-artwork';
 import { Link } from '@/i18n/navigation';
 import { FavoriteButton } from '@/components/media/favorite-button';
 
@@ -14,15 +13,16 @@ export async function DetailPage({ id, type }: { id: string; type: 'movie' | 'se
   }
   const { item } = result;
   const t = await getTranslations('Catalog');
-  const episodes =
-    type === 'series'
-      ? db
-          .select()
-          .from(media)
-          .where(eq(media.parentId, id))
-          .orderBy(media.season, media.episode)
-          .all()
-      : [];
+  let episodeError = false;
+  let episodes: Awaited<ReturnType<typeof loadSeriesEpisodes>> = [];
+  if (type === 'series') {
+    try {
+      episodes = await loadSeriesEpisodes(id);
+    } catch {
+      episodeError = true;
+    }
+  }
+  episodes.sort((a, b) => (a.season || 0) - (b.season || 0) || (a.episode || 0) - (b.episode || 0));
   return (
     <>
       <Link
@@ -32,17 +32,15 @@ export async function DetailPage({ id, type }: { id: string; type: 'movie' | 'se
         ← {t(type === 'movie' ? 'movies' : 'series')}
       </Link>
       <div className="grid gap-8 md:grid-cols-[240px_1fr] lg:gap-12">
-        <div className="aspect-[2/3] max-w-60 rounded-xl border border-border bg-gradient-to-br from-surface to-elevated p-6">
-          <span className="font-heading text-xl font-semibold">{item.title}</span>
+        <div className="aspect-[2/3] w-full max-w-60 overflow-hidden rounded-xl bg-surface">
+          <MediaArtwork title={item.title} artwork={item.artwork} />
         </div>
         <div className="flex flex-col items-start justify-center">
           <span className="mb-3 text-sm text-primary">
             {[item.category, item.year].filter(Boolean).join(' · ')}
           </span>
           <h1 className="text-3xl font-bold md:text-4xl">{item.title}</h1>
-          <p className="mt-5 max-w-2xl leading-relaxed text-muted">
-            {item.description || item.originalTitle}
-          </p>
+          <p className="mt-5 max-w-2xl leading-relaxed text-muted">{item.description}</p>
           <p className="mt-3 text-sm text-muted">
             {t('provider')}: {result.provider}
           </p>
@@ -59,6 +57,9 @@ export async function DetailPage({ id, type }: { id: string; type: 'movie' | 'se
           </div>
         </div>
       </div>
+      {type === 'series' && !episodes.length && (
+        <p className="mt-10 text-muted">{t(episodeError ? 'episodeError' : 'noEpisodes')}</p>
+      )}
       {episodes.length > 0 && (
         <section className="mt-12">
           <h2 className="mb-5 text-xl font-semibold">{t('episodes')}</h2>

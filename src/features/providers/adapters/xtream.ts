@@ -24,8 +24,50 @@ function endpoint(config: XtreamConfig, action?: string) {
   }
   return url.toString();
 }
-async function get(config: XtreamConfig, action?: string): Promise<unknown> {
-  return JSON.parse(await fetchRemote(endpoint(config, action)));
+async function get(config: XtreamConfig, action?: string, id?: string): Promise<unknown> {
+  const url = new URL(endpoint(config, action));
+  if (id) {
+    url.searchParams.set('series_id', id);
+  }
+  return JSON.parse(await fetchRemote(url.toString()));
+}
+export async function xtreamEpisodes(
+  config: XtreamConfig,
+  seriesId: string,
+): Promise<ImportItem[]> {
+  const details = object.parse(await get(config, 'get_series_info', seriesId));
+  const seasons = object.parse(details.episodes);
+  const episodes: ImportItem[] = [];
+  for (const [seasonKey, entries] of Object.entries(seasons)) {
+    const season = Number(seasonKey);
+    if (!Number.isSafeInteger(season) || !Array.isArray(entries)) {
+      continue;
+    }
+    for (const raw of entries.slice(0, 200)) {
+      const entry = object.safeParse(raw);
+      if (!entry.success) {
+        continue;
+      }
+      const id = string(entry.data.id);
+      if (!id) {
+        continue;
+      }
+      const number = Number(entry.data.episode_num);
+      const info = object.safeParse(entry.data.info);
+      episodes.push({
+        externalId: id,
+        type: 'episode',
+        title: string(entry.data.title) || `Episode ${number}`,
+        originalTitle: string(entry.data.title) || `Episode ${number}`,
+        season,
+        episode: Number.isSafeInteger(number) ? number : undefined,
+        description: info.success ? string(info.data.plot) || undefined : undefined,
+        artwork: info.success ? string(info.data.movie_image) || undefined : undefined,
+        extension: string(entry.data.container_extension) || 'mp4',
+      });
+    }
+  }
+  return episodes.slice(0, 2000);
 }
 export async function checkXtream(config: XtreamConfig) {
   const response = object.parse(await get(config));

@@ -6,8 +6,10 @@ A local-first media catalog and IPTV player built with Next.js and TypeScript. C
 
 ## Current functionality
 
-- Responsive browsing for live channels, movies, series, and a personal library.
-- Xtream and remote/local M3U imports with connection checking and catalog pagination.
+- Responsive browsing for live channels, movies, series, and a personal library; Live TV offers category, channel list, and selected-player regions.
+- Xtream and remote/local M3U imports with connection checking, complete category counts, and bounded pagination. Imported counts do **not** indicate playable streams.
+- Grouped global search with an overlay that does not move the page, and provider artwork fallbacks.
+- Xtream episode details are retrieved on first series visit and persisted per episode. This integration has not been validated with an authorized production provider.
 - Favorites, playback progress, recently watched channels, and a small isolated demo catalog.
 - Browser playback with Shaka Player for supported manifests and native direct video.
 - Brazilian Portuguese (default), English, and Spanish route prefixes.
@@ -32,7 +34,7 @@ Run `pnpm db:generate` after schema changes; commit migrations and apply them wi
 
 Playback depends on browser codecs, CORS, provider authentication, HTTPS compatibility, and supported manifests. No DRM bypass, transcoding, or video relay is provided. Source URLs returned to the browser may contain provider credentials; use Mosa only on a trusted local device and do not share playback requests. Remote provider destinations are restricted against common private-address targets, but DNS rebinding and provider-hosted assets require additional hardening before any LAN or cloud deployment. Keep the application bound to localhost.
 
-The database, generated secret, and local history are ignored by Git. The demo uses synthetic titles and a CC0 video from MDN. No real provider credentials are needed for CI.
+The database, generated secret, and local history are ignored by Git. The demo uses synthetic titles and a CC0 video from MDN; these titles are illustrative, not a film library. No real provider credentials are needed for CI.
 
 ## Project structure
 
@@ -45,7 +47,7 @@ The database, generated secret, and local history are ignored by Git. The demo u
 
 ## Known limitations
 
-This is a work-in-progress MVP. Xtream series episode import, EPG/XMLTV, metadata enrichment, complete player track controls, personal home ordering, secure multiuser access, and automated subtitle options are not implemented. A local M3U must be reimported to refresh. Remote catalogs can take time to import. No screenshots have been published yet; avoid using private provider content in screenshots.
+This is a work in progress, **not a verified streaming service**. Playback is attempted on selection, not validated during import; a catalog listing or source URL does not prove playable media. Series details can fail to load when an Xtream provider does not implement the compatible endpoint. EPG/XMLTV, metadata enrichment, complete player track controls, personal home ordering, secure multiuser access, and automated subtitle options are not implemented. M3U movie classification only recognizes explicit Xtream-style movie URLs; all other entries remain live until better evidence is available. A local M3U must be reimported to refresh. Remote sync updates known entries but does not yet reconcile missing entries. No screenshots have been published yet; avoid using private provider content in screenshots.
 
 ## License
 

@@ -29,12 +29,16 @@ export function parseM3u(content: string): ImportItem[] {
           continue;
         }
         const originalTitle = metadata.title;
+        // Xtream-style /movie/ paths identify VOD; a group label alone is not evidence.
+        const type = /^\/movie\/[^/]+\/[^/]+\/[^/]+\.(?:mp4|mkv|avi|mov|webm)$/i.test(url.pathname)
+          ? 'movie'
+          : 'live';
         items.push({
           externalId: createHash('sha256')
             .update(metadata.id ? `${metadata.id}:${value}` : value)
             .digest('hex')
             .slice(0, 32),
-          type: 'live',
+          type,
           title: normalizeTitle(originalTitle),
           originalTitle,
           category: normalizeCategory(metadata.category || 'Other'),
