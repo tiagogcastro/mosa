@@ -2,17 +2,18 @@
 
 ![Mosa logo](public/brand/logo.svg)
 
-A local-first media catalog and IPTV player built with Next.js and TypeScript. Connect your own authorized Xtream-compatible account or M3U playlist. Mosa does not supply subscriptions or copyrighted streams.
+A local-first media catalog and IPTV player built with Next.js and TypeScript. Connect your own authorized Xtream-compatible account, M3U playlist, or compatible Stalker/MAG portal with a provider-registered MAC. Mosa does not supply subscriptions or copyrighted streams.
 
 ## Current functionality
 
-- Responsive browsing for live channels, movies, series, and a personal library; Live TV offers category, channel list, and selected-player regions.
+- Responsive browsing for live channels, movies, series, and a personal library. Live TV keeps category, channel, and player regions independent on desktop, with alphabetic sorting and paging beside the search.
 - Xtream and remote/local M3U imports with connection checking, complete category counts, and bounded pagination. Imported counts do **not** indicate playable streams.
-- Grouped global search with an overlay that does not move the page, and provider artwork fallbacks.
+- Debounced grouped global search with keyboard navigation and provider artwork fallbacks. Sidebar search opens without moving page content.
+- Compatible Stalker/MAG portals can perform handshake and profile authentication using a provider-registered MAC, import a complete live-channel response, and request per-channel playback links. Other portal flows and real-provider compatibility are not verified.
 - Xtream episode details are retrieved on first series visit and persisted per episode. This integration has not been validated with an authorized production provider.
 - Favorites, playback progress, recently watched channels, and a small isolated demo catalog.
-- Browser playback with Shaka Player for supported manifests and native direct video.
-- Brazilian Portuguese (default), English, and Spanish route prefixes.
+- Browser playback with Shaka Player for supported manifests and native direct video; the player shows track selectors only when tracks exist, with VOD speed, Picture-in-Picture when supported, and a real fullscreen container.
+- Brazilian Portuguese (default), English, and Spanish route prefixes. The active provider, sidebar, theme, timezone, automatic next episode, and optional last-channel restoration are persisted in SQLite preferences.
 
 ## Requirements and local setup
 
@@ -29,6 +30,10 @@ Open `http://127.0.0.1:3000`. For a production server, run `pnpm build` followed
 Copy `.env.example` to `.env.local` to customize `DATABASE_URL` and `APP_ENCRYPTION_KEY`. The optional encryption key is 32 random bytes encoded as 64 hex characters; generate one with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Without one, Mosa generates `data/.encryption-key` locally. Back up the key together with the database; losing the key makes encrypted connections inaccessible.
 
 Run `pnpm db:generate` after schema changes; commit migrations and apply them with `pnpm db:migrate`.
+
+## App installation
+
+Mosa provides a web app manifest and installable PNG icons. Browser installation requires a supported browser and secure context (localhost or HTTPS). Installation **does not** run Next.js in the PWA: keep the localhost server running on the PC. Access from a phone needs a secure, authenticated deployment; do not expose the current unauthenticated local server on your network. No service worker caches private APIs or media, and offline playback is not supported.
 
 ## Playback and security
 
@@ -47,7 +52,7 @@ The database, generated secret, and local history are ignored by Git. New demo i
 
 ## Known limitations
 
-This is a work in progress, **not a verified streaming service**. Playback is attempted on selection, not validated during import; a catalog listing or source URL does not prove playable media. Series details can fail to load when an Xtream provider does not implement the compatible endpoint. EPG/XMLTV, metadata enrichment, complete player track controls, personal home ordering, secure multiuser access, and automated subtitle options are not implemented. M3U movie classification only recognizes explicit Xtream-style movie URLs; all other entries remain live until better evidence is available. A local M3U must be reimported to refresh. Remote sync updates known entries but does not yet reconcile missing entries. No screenshots have been published yet; avoid using private provider content in screenshots.
+This is a work in progress, **not a verified streaming service**. Playback is attempted on selection, not validated during import; a catalog listing or source URL does not prove playable media. Series details can fail to load when an Xtream provider does not implement the compatible endpoint. EPG/XMLTV, metadata enrichment, subtitle styling/preferences, personal home ordering, secure multiuser access, and additional Stalker/MAG portal variants (including portals requiring second-step credentials), EPG/VOD for those portals, and production-provider compatibility are not implemented or verified. Audio/quality/subtitle controls appear only when Shaka exposes selectable tracks; browser playback and PWA installation have not been visually verified in this environment. The Mosa Device ID is random and is not a physical MAC or portal credential. M3U movie classification only recognizes explicit Xtream-style movie URLs; all other entries remain live until better evidence is available. A local M3U must be reimported to refresh. Remote sync updates known entries but does not yet reconcile missing entries. No screenshots have been published yet; avoid using private provider content in screenshots.
 
 ## License
 
