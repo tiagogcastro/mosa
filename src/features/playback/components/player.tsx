@@ -54,6 +54,8 @@ export function Player({
   const played = useRef(false);
   const shaka = useRef<shakaPlayer.Player | null>(null);
   const transportStream = useRef<ReturnType<typeof mpegts.createPlayer> | null>(null);
+  const fallback = useRef<(() => boolean) | null>(null);
+  const activeFormat = useRef<string | null>(null);
   const t = useTranslations('Player');
   const router = useRouter();
   const [error, setError] = useState('');
@@ -64,6 +66,7 @@ export function Player({
   const [duration, setDuration] = useState(0);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [retry, setRetry] = useState(0);
+  const [sourceAttempt, setSourceAttempt] = useState(0);
   const [volume, setVolume] = useState(1);
   useEffect(() => {
     try {
@@ -120,6 +123,7 @@ export function Player({
   }, [id, type]);
   useEffect(() => {
     let disposed = false;
+    let switching = false;
     if (!video.current) {
       return;
     }
@@ -131,7 +135,11 @@ export function Player({
     async function load() {
       try {
         const response = await fetch(`/api/playback?id=${encodeURIComponent(id)}`);
-        const source = (await response.json()) as { url?: string; format?: string };
+        const source = (await response.json()) as {
+          url?: string;
+          format?: string;
+          alternatives?: { url: string; format: string }[];
+        };
         if (!response.ok || !source.url) {
           setError(t('unavailable'));
           setDetail(t('sourceDetail'));
@@ -140,34 +148,59 @@ export function Player({
         if (disposed) {
           return;
         }
-        if (source.format === 'hls' && element.canPlayType('application/vnd.apple.mpegurl')) {
-          element.src = source.url;
-        } else if (source.format === 'direct' && /\.ts(?:\?|$)/i.test(source.url)) {
+        const choices = [source, ...(source.alternatives ?? [])];
+        const selected = choices[sourceAttempt];
+        if (!selected?.url) {
+          setError(t('unavailable'));
+          setDetail(t('sourceDetail'));
+          return;
+        }
+        const tryAlternate = () => {
+          if (disposed || switching) {
+            return switching;
+          }
+          if (sourceAttempt + 1 >= choices.length) {
+            return false;
+          }
+          switching = true;
+          setError('');
+          setDetail('');
+          setSourceAttempt(sourceAttempt + 1);
+          return true;
+        };
+        fallback.current = tryAlternate;
+        activeFormat.current = selected.format ?? null;
+        if (selected.format === 'hls' && element.canPlayType('application/vnd.apple.mpegurl')) {
+          element.src = selected.url;
+        } else if (selected.format === 'direct' && /\.ts(?:\?|$)/i.test(selected.url)) {
           const mpegtsLibrary = await import('mpegts.js');
           if (disposed) {
             return;
           }
           const engine = mpegtsLibrary.default;
           if (!engine.isSupported()) {
+            if (tryAlternate()) {
+              return;
+            }
             setError(t('unsupported'));
             setDetail(t('formatDetail'));
             return;
           }
           const player = engine.createPlayer(
-            { type: 'mpegts', isLive: type === 'live', url: source.url },
+            { type: 'mpegts', isLive: type === 'live', url: selected.url },
             { isLive: type === 'live', lazyLoad: type !== 'live' },
           );
           transportStream.current = player;
           player.on(engine.Events.ERROR, () => {
-            if (!disposed) {
+            if (!disposed && !tryAlternate()) {
               setDetail(t('networkDetail'));
               setError(t('error'));
             }
           });
           player.attachMediaElement(element);
           player.load();
-        } else if (source.format === 'direct') {
-          element.src = source.url;
+        } else if (selected.format === 'direct') {
+          element.src = selected.url;
         } else {
           const shakaModule = await import('shaka-player');
           if (disposed) {
@@ -175,6 +208,9 @@ export function Player({
           }
           const PlayerClass = shakaModule.default.Player;
           if (!PlayerClass.isBrowserSupported()) {
+            if (tryAlternate()) {
+              return;
+            }
             setError(t('unsupported'));
             setDetail(t('formatDetail'));
             return;
@@ -185,7 +221,7 @@ export function Player({
           if (disposed) {
             return;
           }
-          await player.load(source.url);
+          await player.load(selected.url);
           if (disposed) {
             return;
           }
@@ -223,16 +259,29 @@ export function Player({
         }
       } catch (failure) {
         if (!disposed) {
+          if (fallback.current?.()) {
+            return;
+          }
           const category = (failure as { category?: number })?.category;
+          const status =
+            (failure as { code?: number; data?: unknown[] })?.code === 1001
+              ? (failure as { data?: unknown[] }).data?.find(
+                  (value) => typeof value === 'number' && value >= 400 && value < 600,
+                )
+              : undefined;
           setDetail(
             t(
-              category === 1
-                ? 'networkDetail'
-                : category === 4
-                  ? 'manifestDetail'
-                  : category === 3
-                    ? 'decodeDetail'
-                    : 'unknownDetail',
+              status === 401 || status === 403
+                ? 'accessDetail'
+                : status === 404
+                  ? 'missingDetail'
+                  : category === 1
+                    ? 'networkDetail'
+                    : category === 4
+                      ? 'manifestDetail'
+                      : category === 3
+                        ? 'decodeDetail'
+                        : 'unknownDetail',
             ),
           );
           // Shaka/network failures may be caused by CORS, credentials, segments or connectivity.
@@ -245,6 +294,8 @@ export function Player({
     const interval = setInterval(() => void saveProgress(), 15000);
     return () => {
       disposed = true;
+      fallback.current = null;
+      activeFormat.current = null;
       clearInterval(interval);
       void saveProgress();
       element.pause();
@@ -259,7 +310,7 @@ export function Player({
         void player.destroy().catch(() => console.error('Could not dispose player'));
       }
     };
-  }, [id, position, preferredSpeed, retry, saveProgress, t, type]);
+  }, [id, position, preferredSpeed, retry, saveProgress, sourceAttempt, t, type]);
   useEffect(() => {
     if (countdown === null || countdown <= 0) {
       return;
@@ -311,16 +362,26 @@ export function Player({
             }
           }}
           onError={(event) => {
+            if (fallback.current?.()) {
+              return;
+            }
+            if (shaka.current) {
+              // Shaka reports the actual manifest/network failure; the media
+              // element's code 4 alone would mislabel a 403 as a codec failure.
+              return;
+            }
             const code = event.currentTarget.error?.code;
             setDetail(
               t(
-                code === 2
+                activeFormat.current === 'hls'
                   ? 'networkDetail'
-                  : code === 3
-                    ? 'decodeDetail'
-                    : code === 4
-                      ? 'formatDetail'
-                      : 'unknownDetail',
+                  : code === 2
+                    ? 'networkDetail'
+                    : code === 3
+                      ? 'decodeDetail'
+                      : code === 4
+                        ? 'formatDetail'
+                        : 'unknownDetail',
               ),
             );
             setError(t('error'));
@@ -340,6 +401,7 @@ export function Player({
                 onClick={() => {
                   setError('');
                   setDetail('');
+                  setSourceAttempt(0);
                   setRetry((attempt) => attempt + 1);
                 }}
               >

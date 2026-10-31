@@ -1,8 +1,13 @@
 import { getTranslations } from 'next-intl/server';
 import { MediaSection } from '@/components/media/media-section';
 import { continuing, recentChannels, saved } from '@/features/catalog/queries';
+import { NoActiveSource } from '@/components/media/no-active-source';
+import { activeProviderId } from '@/features/providers/active';
 export const dynamic = 'force-dynamic';
 export default async function Page() {
+  if (!activeProviderId()) {
+    return <NoActiveSource />;
+  }
   const t = await getTranslations('Catalog');
   const h = await getTranslations('Home');
   const favorites = saved();

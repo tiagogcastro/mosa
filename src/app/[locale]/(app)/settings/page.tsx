@@ -6,6 +6,8 @@ import { SettingsPanel } from '@/features/providers/settings-panel';
 import { activeProviderId } from '@/features/providers/active';
 import { preference, deviceId } from '@/features/settings/preferences';
 import { authEnabled, publicOrigin } from '@/features/auth/service';
+import { decrypt } from '@/lib/security/crypto';
+import type { XtreamConfig } from '@/features/providers/adapters/xtream';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +20,7 @@ export default async function SettingsPage() {
       enabled: providers.enabled,
       type: providers.type,
       syncedAt: providers.syncedAt,
+      encryptedConfig: providers.encryptedConfig,
     })
     .from(providers)
     .all();
@@ -29,6 +32,11 @@ export default async function SettingsPage() {
         connections={connections.map((connection) => ({
           ...connection,
           syncedAt: connection.syncedAt?.toISOString() ?? null,
+          liveFormat:
+            connection.type === 'xtream'
+              ? (decrypt<XtreamConfig>(connection.encryptedConfig).liveFormat ?? 'm3u8')
+              : undefined,
+          encryptedConfig: undefined,
         }))}
         activeId={activeProviderId()}
         deviceId={deviceId()}

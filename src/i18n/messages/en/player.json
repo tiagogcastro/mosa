@@ -28,7 +28,7 @@
     "auto": "Automatic",
     "speed": "Speed",
     "sourceDetail": "The source did not provide a playable link. Check your connection and provider authorization.",
-    "formatDetail": "The browser rejected this media format or resource. Direct MPEG-TS and MKV often require another player or authorized conversion.",
+    "formatDetail": "The browser could not play the delivered media. Check the selected format (HLS or TS) and codec support.",
     "networkDetail": "The media request failed. Network, CORS, denied access, server downtime or a segment are possible; the browser cannot identify which here.",
     "manifestDetail": "The stream manifest could not be loaded or parsed. Check the link and format with the source.",
     "decodeDetail": "The browser could not decode the received media; codec or corrupt data may be involved.",
@@ -40,6 +40,8 @@
     "closeExternalPip": "Close external window",
     "externalUnavailable": "External window is unavailable in this browser or for this stream.",
     "live": "Live",
-    "playingInMini": "Playing in the mini player. Select a channel to switch."
+    "playingInMini": "Playing in the mini player. Select a channel to switch.",
+    "accessDetail": "The server rejected this stream (HTTP 401/403). Check that the trial is still active and your provider allows playback on this device.",
+    "missingDetail": "The stream is no longer available at this address (HTTP 404). Refresh the catalog or contact the provider."
   }
 }

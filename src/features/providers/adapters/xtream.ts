@@ -6,6 +6,7 @@ export const xtreamConfig = z.object({
   server: z.url(),
   username: z.string().min(1).max(256),
   password: z.string().min(1).max(256),
+  liveFormat: z.enum(['m3u8', 'ts']).optional(),
 });
 export type XtreamConfig = z.infer<typeof xtreamConfig>;
 const object = z.record(z.string(), z.unknown());
@@ -29,7 +30,8 @@ async function get(config: XtreamConfig, action?: string, id?: string): Promise<
   if (id) {
     url.searchParams.set('series_id', id);
   }
-  return JSON.parse(await fetchRemote(url.toString()));
+  // Catalog responses can exceed the small playlist/metadata default limit.
+  return JSON.parse(await fetchRemote(url.toString(), action ? 32 * 1024 * 1024 : 8 * 1024 * 1024));
 }
 export async function xtreamEpisodes(
   config: XtreamConfig,
@@ -120,7 +122,8 @@ export async function importXtream(config: XtreamConfig): Promise<ImportItem[]> 
 }
 export function xtreamSource(config: XtreamConfig, type: string, id: string, extension: string) {
   const path = type === 'live' ? 'live' : type === 'episode' ? 'series' : 'movie';
-  const safeExtension = /^[a-z\d]{2,5}$/i.test(extension) ? extension : 'mp4';
+  const preferred = type === 'live' ? (config.liveFormat ?? extension) : extension;
+  const safeExtension = /^[a-z\d]{2,5}$/i.test(preferred) ? preferred : 'mp4';
   return new URL(
     `${path}/${encodeURIComponent(config.username)}/${encodeURIComponent(config.password)}/${encodeURIComponent(id)}.${safeExtension}`,
     config.server.endsWith('/') ? config.server : `${config.server}/`,

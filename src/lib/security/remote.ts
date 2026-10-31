@@ -2,6 +2,8 @@ import 'server-only';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 
+export class RemoteSizeError extends Error {}
+
 function publicIp(ip: string) {
   if (ip.includes(':')) {
     return !(/^(::|fc|fd|fe[89ab]|2001:db8)/i.test(ip) || ip === '::1' || ip.startsWith('::ffff:'));
@@ -66,7 +68,7 @@ export async function fetchRemote(
       );
     }
     if (Number(response.headers.get('content-length')) > maxBytes) {
-      throw new Error('Response too large');
+      throw new RemoteSizeError('Response too large');
     }
     const reader = response.body?.getReader();
     if (!reader) {
@@ -82,7 +84,7 @@ export async function fetchRemote(
       size += value.length;
       if (size > maxBytes) {
         await reader.cancel();
-        throw new Error('Response too large');
+        throw new RemoteSizeError('Response too large');
       }
       chunks.push(value);
     }

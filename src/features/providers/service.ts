@@ -34,6 +34,7 @@ export const connectionSchema = z.discriminatedUnion('type', [
     server: z.url(),
     username: z.string().min(1),
     password: z.string().min(1),
+    liveFormat: z.enum(['m3u8', 'ts']).optional(),
   }),
   z.object({
     type: z.literal('quick'),
@@ -43,6 +44,7 @@ export const connectionSchema = z.discriminatedUnion('type', [
     code: z.string().trim().max(80).optional(),
     server: z.url().optional(),
     serverId: z.string().uuid().optional(),
+    liveFormat: z.enum(['m3u8', 'ts']).optional(),
   }),
   z
     .object({
@@ -76,6 +78,7 @@ function resolveQuick(config: Extract<Connection, { type: 'quick' }>) {
     server,
     username: config.username,
     password: config.password,
+    liveFormat: config.liveFormat,
   };
 }
 export async function inspectConnection(config: Connection) {
@@ -196,7 +199,9 @@ export async function refreshProvider(providerId: string): Promise<Result<{ coun
 }
 export async function resolveSource(
   mediaId: string,
-): Promise<Result<{ url: string; format: string }>> {
+): Promise<
+  Result<{ url: string; format: string; alternatives?: { url: string; format: string }[] }>
+> {
   const item = db.select().from(media).where(eq(media.id, mediaId)).get();
   if (!item) {
     return { success: false, error: 'MEDIA_NOT_FOUND' };
@@ -206,6 +211,7 @@ export async function resolveSource(
     return { success: false, error: 'SOURCE_UNAVAILABLE' };
   }
   let url = item.sourceUrl;
+  let alternatives: { url: string; format: string }[] | undefined;
   if (provider.type === 'stalker') {
     if (item.type !== 'live' || !url) {
       return { success: false, error: 'SOURCE_UNAVAILABLE' };
@@ -219,12 +225,27 @@ export async function resolveSource(
     url = decrypt<string>(url);
   }
   if (provider.type === 'xtream') {
-    url = xtreamSource(
-      decrypt<XtreamConfig>(provider.encryptedConfig),
-      item.type,
-      item.externalId,
-      item.extension || 'mp4',
-    );
+    const config = decrypt<XtreamConfig>(provider.encryptedConfig);
+    url = xtreamSource(config, item.type, item.externalId, item.extension || 'mp4');
+    if (item.type === 'live') {
+      const alternate = xtreamSource(
+        {
+          ...config,
+          liveFormat:
+            config.liveFormat === 'ts' || (!config.liveFormat && item.extension === 'ts')
+              ? 'm3u8'
+              : 'ts',
+        },
+        item.type,
+        item.externalId,
+        item.extension || 'm3u8',
+      );
+      if (alternate !== url) {
+        alternatives = [
+          { url: alternate, format: /\.m3u8(?:\?|$)/i.test(alternate) ? 'hls' : 'direct' },
+        ];
+      }
+    }
   }
   if (!url) {
     return { success: false, error: 'SOURCE_UNAVAILABLE' };
@@ -234,7 +255,7 @@ export async function resolveSource(
     : /\.mpd(?:\?|$)/i.test(url)
       ? 'dash'
       : 'direct';
-  return { success: true, data: { url, format } };
+  return { success: true, data: { url, format, alternatives } };
 }
 export async function loadSeriesEpisodes(seriesId: string) {
   const series = db.select().from(media).where(eq(media.id, seriesId)).get();

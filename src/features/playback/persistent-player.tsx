@@ -191,6 +191,7 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
         >
           <div className="min-h-0 flex-1">
             <Player
+              key={item.id}
               {...item}
               compact={floating}
               floating={floating}

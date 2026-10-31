@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { authEnabled, publicOrigin } from '@/features/auth/service';
+import { RemoteSizeError } from '@/lib/security/remote';
 
 export function protectMutation(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -23,7 +24,12 @@ export function protectMutation(request: NextRequest) {
   return null;
 }
 export function failure(error: unknown) {
-  const code = error instanceof ZodError ? 'INVALID_INPUT' : 'OPERATION_FAILED';
+  const code =
+    error instanceof ZodError
+      ? 'INVALID_INPUT'
+      : error instanceof RemoteSizeError
+        ? 'SOURCE_TOO_LARGE'
+        : 'OPERATION_FAILED';
 
   return NextResponse.json({ success: false, error: { code } }, { status: 400 });
 }

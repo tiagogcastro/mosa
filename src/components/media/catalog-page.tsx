@@ -11,6 +11,8 @@ import {
 import { MediaSection } from '@/components/media/media-section';
 import { categoryPresentation } from '@/features/live/category';
 import { DetailPage } from '@/components/media/detail-page';
+import { NoActiveSource } from '@/components/media/no-active-source';
+import { activeProviderId } from '@/features/providers/active';
 
 export async function CatalogPage({
   type,
@@ -26,6 +28,9 @@ export async function CatalogPage({
   }>;
 }) {
   const query = await searchParams;
+  if (!activeProviderId()) {
+    return <NoActiveSource />;
+  }
   const t = await getTranslations('Catalog');
   const section = type === 'movie' ? 'movies' : type === 'series' ? 'series' : 'live';
   const sort = query.sort === 'alpha' ? 'alpha' : 'recent';

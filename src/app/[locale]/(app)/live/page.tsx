@@ -8,9 +8,14 @@ import {
 } from '@/features/catalog/queries';
 import { preference } from '@/features/settings/preferences';
 import { LiveTv } from '@/features/live/live-tv';
+import { activeProviderId } from '@/features/providers/active';
+import { NoActiveSource } from '@/components/media/no-active-source';
 export const dynamic = 'force-dynamic';
 export default async function Page({ searchParams }: PageProps<'/[locale]/live'>) {
   const params = await searchParams;
+  if (!activeProviderId()) {
+    return <NoActiveSource />;
+  }
   const query = typeof params.q === 'string' ? params.q.slice(0, 100) : '';
   const selected = typeof params.channel === 'string' ? mediaById(params.channel) : null;
   const explicit = selected?.item.type === 'live' ? selected : null;

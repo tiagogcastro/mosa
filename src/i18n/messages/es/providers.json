@@ -20,7 +20,7 @@
     "demo": "Activar demostración",
     "demoNote": "Contenido ficticio con video de demostración autorizado.",
     "noPassword": "Déjalo vacío para mantener la contraseña actual",
-    "limit": "La importación admite hasta 20.000 entradas y 8 MB.",
+    "limit": "Listas M3U de hasta 8 MB y 20.000 entradas. Si el proveedor envió un DNS y la lista es mayor, elige credenciales de mensaje (Xtream).",
     "disable": "Desactivar",
     "enable": "Activar",
     "registeredMac": "MAC registrado por el proveedor",
@@ -35,6 +35,15 @@
     "optionalServer": "URL del servidor autorizado (si la conoces)",
     "savedServer": "O usa la dirección de una fuente Xtream guardada",
     "chooseServer": "Selecciona fuente guardada",
-    "quickNote": "Sin URL, selecciona explícitamente un servidor guardado. No probamos credenciales en hosts desconocidos. El código no se envía al proveedor ni se guarda."
+    "quickNote": "Usa solo el DNS indicado por tu proveedor; las páginas webplayer no son necesariamente servidores Xtream. Sin DNS, elige una fuente Xtream guardada. El PIN no se usa ni se guarda.",
+    "quickGuide": "¿Recibiste un mensaje con usuario, contraseña y DNS? Pégalo abajo para rellenar los campos. Las páginas webplayer no sustituyen al DNS.",
+    "xtreamGuide": "Usa el DNS/API Xtream del proveedor con usuario y contraseña. No pegues aquí la URL completa de la lista M3U.",
+    "m3uGuide": "Usa la URL completa de la lista (get.php con parámetros) o un archivo .m3u. Las listas muy grandes requieren Xtream.",
+    "stalkerGuide": "Usa solo la dirección del portal y el MAC registrado; un usuario y contraseña Xtream no son un MAC.",
+    "usePastedPlaylist": "Usar la URL M3U encontrada en el mensaje",
+    "largePlaylist": "La lista supera los 8 MB. Si tienes DNS, usuario y contraseña, usa credenciales de mensaje (Xtream) en vez de importar la lista enorme.",
+    "connectedCount": "Lista válida: {count} entradas encontradas.",
+    "importNote": "Verificar prueba las credenciales; Guardar también importa el catálogo. La reproducción depende del enlace, navegador y permisos del proveedor.",
+    "liveFormat": "Formato de canales en vivo (usa TS si el mensaje dice output=ts)"
   }
 }

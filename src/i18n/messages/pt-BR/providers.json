@@ -20,7 +20,7 @@
     "demo": "Ativar demonstração",
     "demoNote": "Conteúdo fictício com vídeo de demonstração autorizado.",
     "noPassword": "Deixe em branco para manter a senha atual",
-    "limit": "A importação aceita até 20.000 entradas e 8 MB.",
+    "limit": "Listas M3U de até 8 MB e 20.000 entradas. Se seu fornecedor enviou um DNS e a lista for maior, escolha credenciais de mensagem (Xtream).",
     "disable": "Desativar",
     "enable": "Ativar",
     "registeredMac": "MAC registrado no provedor",
@@ -35,6 +35,15 @@
     "optionalServer": "URL do servidor autorizado (se conhecida)",
     "savedServer": "Ou use o endereço de uma fonte Xtream já cadastrada",
     "chooseServer": "Selecione uma fonte cadastrada",
-    "quickNote": "Sem URL, selecione explicitamente um servidor já salvo. Não testamos usuário/senha em domínios desconhecidos. O código não é enviado ao provedor nem armazenado."
+    "quickNote": "Use apenas o DNS fornecido pelo provedor; sites de webplayer não são necessariamente servidores Xtream. Sem DNS, selecione uma fonte Xtream já salva. O PIN não é usado nem armazenado.",
+    "quickGuide": "Recebeu uma mensagem com usuário, senha e DNS? Cole-a abaixo: o Mosa preencherá os campos. Sites para assistir no navegador não substituem o DNS.",
+    "xtreamGuide": "Use o DNS/API Xtream indicado pelo fornecedor com usuário e senha. Não cole a URL completa da lista M3U aqui.",
+    "m3uGuide": "Use a URL completa da lista (get.php com os parâmetros) ou escolha um arquivo .m3u. Listas muito grandes exigem Xtream.",
+    "stalkerGuide": "Use somente o endereço do portal e o MAC registrado pelo fornecedor; usuário e senha Xtream não são um MAC.",
+    "usePastedPlaylist": "Usar a URL da lista M3U encontrada na mensagem",
+    "largePlaylist": "A lista excede 8 MB. Se você recebeu um DNS com usuário e senha, use credenciais de mensagem (Xtream); não é necessário importar essa lista gigante.",
+    "connectedCount": "Lista válida: {count} entradas encontradas.",
+    "importNote": "A verificação testa as credenciais; salvar também importa o catálogo. A reprodução depende do link, do navegador e da autorização do fornecedor.",
+    "liveFormat": "Formato dos canais ao vivo (use TS se a mensagem diz output=ts)"
   }
 }

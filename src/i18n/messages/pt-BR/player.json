@@ -28,7 +28,7 @@
     "auto": "Automática",
     "speed": "Velocidade",
     "sourceDetail": "A fonte não forneceu um link reproduzível. Confira a conexão e a autorização do provedor.",
-    "formatDetail": "O navegador rejeitou este formato ou recurso de mídia. MPEG-TS e MKV diretos frequentemente exigem outro player ou conversão autorizada.",
+    "formatDetail": "O navegador não aceitou a mídia entregue. Confirme o formato escolhido (HLS ou TS) e a compatibilidade do codec.",
     "networkDetail": "A solicitação de mídia falhou. Pode ser rede, CORS, acesso negado, servidor indisponível ou um segmento: o navegador não informa qual deles aqui.",
     "manifestDetail": "O manifesto da transmissão não pôde ser carregado ou interpretado; confirme o link e o formato na fonte.",
     "decodeDetail": "O navegador não conseguiu decodificar a mídia recebida; codec ou dados corrompidos são possibilidades.",
@@ -40,6 +40,8 @@
     "closeExternalPip": "Fechar janela externa",
     "externalUnavailable": "Janela externa indisponível neste navegador ou para esta transmissão.",
     "live": "Ao vivo",
-    "playingInMini": "Reprodução no mini player. Selecione um canal na lista para trocar."
+    "playingInMini": "Reprodução no mini player. Selecione um canal na lista para trocar.",
+    "accessDetail": "O servidor recusou esta transmissão (HTTP 401/403). Verifique se o teste ainda está ativo e se o provedor permite reproduzi-la neste dispositivo.",
+    "missingDetail": "A transmissão não existe mais neste endereço (HTTP 404). Atualize o catálogo ou consulte o provedor."
   }
 }

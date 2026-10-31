@@ -16,6 +16,7 @@ interface ConnectionSummary {
   type: string;
   enabled: boolean;
   syncedAt: string | null;
+  liveFormat?: 'm3u8' | 'ts';
 }
 const field =
   'min-h-11 w-full rounded-lg bg-surface px-3 text-foreground focus-visible:ring-1 focus-visible:ring-primary';
@@ -390,6 +391,7 @@ export function SettingsPanel({
                           password: form.get('password') || undefined,
                           url: form.get('url') || undefined,
                           mac: form.get('mac') || undefined,
+                          liveFormat: form.get('liveFormat') || undefined,
                         });
                       }}
                     >
@@ -427,6 +429,17 @@ export function SettingsPanel({
                               placeholder={t('unchanged')}
                               className={field}
                             />
+                          </label>
+                          <label className="text-sm">
+                            {providerText('liveFormat')}
+                            <select
+                              name="liveFormat"
+                              defaultValue={connection.liveFormat ?? 'm3u8'}
+                              className={field}
+                            >
+                              <option value="m3u8">HLS (.m3u8)</option>
+                              <option value="ts">MPEG-TS (.ts)</option>
+                            </select>
                           </label>
                         </>
                       )}

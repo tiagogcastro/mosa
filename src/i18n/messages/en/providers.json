@@ -20,7 +20,7 @@
     "demo": "Enable demo",
     "demoNote": "Synthetic content with an authorized demo video.",
     "noPassword": "Leave blank to keep the current password",
-    "limit": "Imports are limited to 20,000 entries and 8 MB.",
+    "limit": "M3U lists up to 8 MB and 20,000 entries. If the provider sent a DNS and the list is larger, choose message credentials (Xtream).",
     "disable": "Disable",
     "enable": "Enable",
     "registeredMac": "Provider-registered MAC",
@@ -35,6 +35,15 @@
     "optionalServer": "Authorized server URL (if known)",
     "savedServer": "Or use a saved Xtream source address",
     "chooseServer": "Select saved source",
-    "quickNote": "Without a URL, explicitly select a saved server. We do not probe unknown hosts with your credentials. The code is not sent to the provider or stored."
+    "quickNote": "Use only the DNS supplied by your provider; webplayer sites are not necessarily Xtream servers. Without a DNS, select a saved Xtream source. The PIN is not used or stored.",
+    "quickGuide": "Got a message with a username, password and DNS? Paste it below to fill the fields. Browser player sites are not a substitute for the DNS.",
+    "xtreamGuide": "Use the provider’s Xtream DNS/API with username and password. Do not paste the complete M3U playlist URL here.",
+    "m3uGuide": "Use the complete playlist URL (get.php with parameters) or a .m3u file. Very large lists require Xtream.",
+    "stalkerGuide": "Use only the portal address and provider-registered MAC; an Xtream username and password are not a MAC.",
+    "usePastedPlaylist": "Use the M3U playlist URL found in the message",
+    "largePlaylist": "The playlist exceeds 8 MB. If you have a DNS, username and password, use message credentials (Xtream) instead of importing this large list.",
+    "connectedCount": "Valid playlist: {count} entries found.",
+    "importNote": "Check tests your credentials; Save also imports the catalog. Playback depends on the link, browser and provider permissions.",
+    "liveFormat": "Live channel format (use TS if the message says output=ts)"
   }
 }
