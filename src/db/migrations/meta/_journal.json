@@ -15,6 +15,20 @@
       "when": 1793412321188,
       "tag": "0001_fair_viper",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793452253263,
+      "tag": "0002_useful_dark_phoenix",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793453811105,
+      "tag": "0003_fixed_lily_hollister",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { db } from '@/db/client';
 import { media, providers } from '@/db/schema';
+import { attachProvider, profileForProvider, setActiveProfile } from '@/features/profiles/service';
 
 const demoProviderId = 'demo';
 const demoVideoUrl = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
@@ -35,4 +36,10 @@ export function installDemo(): void {
       .onConflictDoNothing()
       .run();
   });
+  const profile = profileForProvider(demoProviderId);
+  if (profile) {
+    setActiveProfile(profile.id);
+  } else {
+    attachProvider(demoProviderId, 'Mosa Demo');
+  }
 }

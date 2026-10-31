@@ -14,6 +14,10 @@ export default getRequestConfig(async ({ requestLocale }) => {
     'player',
     'settings',
     'auth',
+    'profiles',
+    'restrictions',
+    'network',
+    'provision',
   ];
   const messages: Record<string, unknown> = {};
   for (const section of sections) {

@@ -3,12 +3,15 @@ import { randomUUID } from 'node:crypto';
 import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db/client';
-import { media, providers } from '@/db/schema';
-import { activeProviderId, selectActiveProvider } from '@/features/providers/active';
+import { media, profiles, providers } from '@/db/schema';
+import { activeProviderId } from '@/features/providers/active';
 import { encrypt, decrypt } from '@/lib/security/crypto';
 import { fetchRemote } from '@/lib/security/remote';
 import type { ImportItem } from '@/features/catalog/normalize';
 import type { Result } from '@/lib/result';
+import { activeProfile, attachProvider, profileForProvider } from '@/features/profiles/service';
+import { applyAdultDefaults, mediaIsVisible } from '@/features/catalog/restrictions';
+import { preference } from '@/features/settings/preferences';
 import { parseM3u } from '@/features/providers/adapters/m3u';
 import {
   authenticateStalker,
@@ -34,7 +37,7 @@ export const connectionSchema = z.discriminatedUnion('type', [
     server: z.url(),
     username: z.string().min(1),
     password: z.string().min(1),
-    liveFormat: z.enum(['m3u8', 'ts']).optional(),
+    liveFormat: z.enum(['auto', 'm3u8', 'ts']).optional(),
   }),
   z.object({
     type: z.literal('quick'),
@@ -44,7 +47,7 @@ export const connectionSchema = z.discriminatedUnion('type', [
     code: z.string().trim().max(80).optional(),
     server: z.url().optional(),
     serverId: z.string().uuid().optional(),
-    liveFormat: z.enum(['m3u8', 'ts']).optional(),
+    liveFormat: z.enum(['auto', 'm3u8', 'ts']).optional(),
   }),
   z
     .object({
@@ -55,6 +58,7 @@ export const connectionSchema = z.discriminatedUnion('type', [
         .string()
         .max(8 * 1024 * 1024)
         .optional(),
+      epgUrl: z.url().optional(),
     })
     .refine((value) => !!(value.url || value.content), 'Playlist required'),
 ]);
@@ -96,9 +100,23 @@ export async function inspectConnection(config: Connection) {
   const items = parseM3u(playlist);
   return { count: items.length };
 }
-export async function importConnection(config: Connection) {
+export async function importConnection(
+  config: Connection,
+  target?: { profileId: string; replace: boolean },
+) {
   if (config.type === 'quick') {
-    return importConnection(resolveQuick(config));
+    return importConnection(resolveQuick(config), target);
+  }
+  const receivingProfile = target
+    ? db.select().from(profiles).where(eq(profiles.id, target.profileId)).get()
+    : null;
+  if (
+    target &&
+    (!receivingProfile ||
+      receivingProfile.id !== activeProfile().id ||
+      (!!receivingProfile.providerId && !target.replace))
+  ) {
+    throw new Error('Profile unavailable or replacement not confirmed');
   }
   let items: ImportItem[];
 
@@ -126,8 +144,32 @@ export async function importConnection(config: Connection) {
       })
       .run();
     insertItems(tx, providerId, items);
+    if (target && receivingProfile) {
+      if (receivingProfile.providerId) {
+        tx.update(profiles)
+          .set({ providerId: null })
+          .where(eq(profiles.id, receivingProfile.id))
+          .run();
+        const now = new Date();
+        tx.insert(profiles)
+          .values({
+            id: randomUUID(),
+            name: `${receivingProfile.name} · anterior`,
+            avatarColor: receivingProfile.avatarColor,
+            providerId: receivingProfile.providerId,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .run();
+      }
+      tx.update(profiles)
+        .set({ providerId, updatedAt: new Date() })
+        .where(eq(profiles.id, receivingProfile.id))
+        .run();
+    }
   });
-  selectActiveProvider(providerId);
+  const profileId = target ? target.profileId : attachProvider(providerId, config.name);
+  applyAdultDefaults(profileId, providerId);
   return { id: providerId, count: items.length };
 }
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -195,6 +237,10 @@ export async function refreshProvider(providerId: string): Promise<Result<{ coun
       .where(eq(providers.id, providerId))
       .run();
   });
+  const profile = profileForProvider(providerId);
+  if (profile) {
+    applyAdultDefaults(profile.id, providerId);
+  }
   return { success: true, data: { count: items.length } };
 }
 export async function resolveSource(
@@ -203,7 +249,7 @@ export async function resolveSource(
   Result<{ url: string; format: string; alternatives?: { url: string; format: string }[] }>
 > {
   const item = db.select().from(media).where(eq(media.id, mediaId)).get();
-  if (!item) {
+  if (!item || !mediaIsVisible(mediaId)) {
     return { success: false, error: 'MEDIA_NOT_FOUND' };
   }
   const provider = db.select().from(providers).where(eq(providers.id, item.providerId)).get();
@@ -226,16 +272,25 @@ export async function resolveSource(
   }
   if (provider.type === 'xtream') {
     const config = decrypt<XtreamConfig>(provider.encryptedConfig);
-    url = xtreamSource(config, item.type, item.externalId, item.extension || 'mp4');
+    const globalFormat = preference('default_stream_format', 'auto');
+    const configuredFormat =
+      config.liveFormat ??
+      (globalFormat === 'ts' || globalFormat === 'm3u8' ? globalFormat : 'auto');
+    const effectiveFormat =
+      configuredFormat === 'auto'
+        ? item.extension === 'ts' || item.extension === 'm3u8'
+          ? item.extension
+          : 'm3u8'
+        : configuredFormat;
+    url = xtreamSource(
+      { ...config, liveFormat: effectiveFormat },
+      item.type,
+      item.externalId,
+      item.extension || 'mp4',
+    );
     if (item.type === 'live') {
       const alternate = xtreamSource(
-        {
-          ...config,
-          liveFormat:
-            config.liveFormat === 'ts' || (!config.liveFormat && item.extension === 'ts')
-              ? 'm3u8'
-              : 'ts',
-        },
+        { ...config, liveFormat: effectiveFormat === 'ts' ? 'm3u8' : 'ts' },
         item.type,
         item.externalId,
         item.extension || 'm3u8',
@@ -259,7 +314,12 @@ export async function resolveSource(
 }
 export async function loadSeriesEpisodes(seriesId: string) {
   const series = db.select().from(media).where(eq(media.id, seriesId)).get();
-  if (!series || series.type !== 'series') {
+  if (
+    !series ||
+    series.type !== 'series' ||
+    series.providerId !== activeProviderId() ||
+    !mediaIsVisible(seriesId)
+  ) {
     return [];
   }
   const provider = db.select().from(providers).where(eq(providers.id, series.providerId)).get();

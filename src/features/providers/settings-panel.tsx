@@ -10,6 +10,11 @@ import { AddProviderModal } from '@/features/providers/add-provider-modal';
 import { QRCodeSVG } from 'qrcode.react';
 import { PairDevice } from '@/features/auth/pair-device';
 import { usePathname, useRouter } from '@/i18n/navigation';
+import { ConnectionForm } from '@/features/providers/connection-form';
+import { toast } from 'sonner';
+import { NetworkPanel } from '@/features/settings/network-panel';
+import { ProvisionPanel } from '@/features/providers/provision-panel';
+import { RestrictionsPanel } from '@/features/catalog/restrictions-panel';
 
 interface ConnectionSummary {
   id: string;
@@ -17,7 +22,8 @@ interface ConnectionSummary {
   type: string;
   enabled: boolean;
   syncedAt: string | null;
-  liveFormat?: 'm3u8' | 'ts';
+  liveFormat?: 'auto' | 'm3u8' | 'ts';
+  local?: boolean;
   server?: string;
   username?: string;
   mac?: string;
@@ -30,6 +36,8 @@ const sections = [
   'appearance',
   'playback',
   'providers',
+  'restrictions',
+  'network',
   'device',
   'privacy',
   'about',
@@ -45,6 +53,10 @@ export function SettingsPanel({
   initialAutoNext,
   initialRestoreChannel,
   initialTheme,
+  initialDefaultFormat,
+  networkHost,
+  networkStatus,
+  networkFormat,
 }: {
   connections: ConnectionSummary[];
   activeId: string | null;
@@ -55,6 +67,10 @@ export function SettingsPanel({
   initialAutoNext: boolean;
   initialRestoreChannel: boolean;
   initialTheme: string;
+  initialDefaultFormat: string;
+  networkHost: string | null;
+  networkStatus: string | null;
+  networkFormat: string;
 }) {
   const t = useTranslations('Settings');
   const providerText = useTranslations('Providers');
@@ -69,6 +85,7 @@ export function SettingsPanel({
   const [autoNext, setAutoNext] = useState(initialAutoNext);
   const [restoreChannel, setRestoreChannel] = useState(initialRestoreChannel);
   const [theme, setTheme] = useState(initialTheme);
+  const [defaultFormat, setDefaultFormat] = useState(initialDefaultFormat);
   const [section, setSection] = useState<(typeof sections)[number]>('general');
 
   async function save(key: string, value: string) {
@@ -82,6 +99,7 @@ export function SettingsPanel({
         throw new Error('Could not save');
       }
       router.refresh();
+      toast.success(t('saved'));
     } catch {
       setMessage(common('error'));
     }
@@ -120,8 +138,10 @@ export function SettingsPanel({
       }
       setEditing(null);
       router.refresh();
+      toast.success(method === 'DELETE' ? t('sourceRemoved') : t('sourceUpdated'));
     } catch {
       setMessage(providerText('invalid'));
+      toast.error(t('operationFailed'));
     } finally {
       setBusy(false);
     }
@@ -262,6 +282,28 @@ export function SettingsPanel({
           </label>
         </section>
         <section
+          id="restrictions"
+          role="tabpanel"
+          aria-labelledby="settings-tab-restrictions"
+          hidden={section !== 'restrictions'}
+        >
+          {section === 'restrictions' && <RestrictionsPanel />}
+        </section>
+        <section
+          id="network"
+          role="tabpanel"
+          aria-labelledby="settings-tab-network"
+          hidden={section !== 'network'}
+        >
+          {section === 'network' && (
+            <NetworkPanel
+              providerHost={networkHost}
+              providerStatus={networkStatus}
+              format={networkFormat}
+            />
+          )}
+        </section>
+        <section
           id="appearance"
           role="tabpanel"
           aria-labelledby="settings-tab-appearance"
@@ -296,6 +338,22 @@ export function SettingsPanel({
           className="max-w-3xl space-y-5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6 lg:gap-y-5 lg:space-y-0"
         >
           <h2 className="font-heading text-xl font-semibold lg:col-span-2">{t('playback')}</h2>
+          <label className="block space-y-2 text-sm lg:col-span-2">
+            {t('defaultStreamFormat')}
+            <select
+              className={field}
+              value={defaultFormat}
+              onChange={(event) => {
+                setDefaultFormat(event.target.value);
+                void save('default_stream_format', event.target.value);
+              }}
+            >
+              <option value="auto">{t('automaticFormat')}</option>
+              <option value="m3u8">HLS / M3U8</option>
+              <option value="ts">MPEG-TS / TS</option>
+            </select>
+            <span className="block text-xs text-muted">{t('formatDescription')}</span>
+          </label>
           <div className="flex min-h-16 items-center justify-between gap-4 rounded-xl bg-surface px-5 py-3 text-sm lg:col-span-2">
             <label htmlFor="autoplay-next" className="cursor-pointer font-medium">
               {t('autoNext')}
@@ -431,7 +489,25 @@ export function SettingsPanel({
                       </DropdownMenu.Portal>
                     </DropdownMenu.Root>
                   </div>
-                  {editing === connection.id && (
+                  {editing === connection.id && ['xtream', 'm3u'].includes(connection.type) && (
+                    <div className="mt-5 border-t border-border pt-4">
+                      <ConnectionForm
+                        editing={{
+                          id: connection.id,
+                          type: connection.type as 'xtream' | 'm3u',
+                          name: connection.name,
+                          server: connection.server,
+                          username: connection.username,
+                          url: connection.url,
+                          local: connection.local,
+                          liveFormat: connection.liveFormat,
+                        }}
+                        onSuccess={() => setEditing(null)}
+                        onCancel={() => setEditing(null)}
+                      />
+                    </div>
+                  )}
+                  {editing === connection.id && connection.type === 'stalker' && (
                     <form
                       className="mt-5 grid gap-3 border-t border-border pt-4"
                       onSubmit={(event) => {
@@ -459,49 +535,6 @@ export function SettingsPanel({
                           className={field}
                         />
                       </label>
-                      {connection.type === 'xtream' && (
-                        <>
-                          <label className="text-sm">
-                            {providerText('server')}
-                            <input
-                              name="server"
-                              type="url"
-                              defaultValue={connection.server}
-                              className={field}
-                            />
-                          </label>
-                          <label className="text-sm">
-                            {providerText('username')}
-                            <input
-                              name="username"
-                              defaultValue={connection.username}
-                              className={field}
-                            />
-                          </label>
-                          <label className="text-sm">
-                            {providerText('password')}
-                            <input
-                              name="password"
-                              type="password"
-                              autoComplete="new-password"
-                              placeholder={t('unchanged')}
-                              className={field}
-                            />
-                            <span className="text-xs text-muted">{t('passwordSafety')}</span>
-                          </label>
-                          <label className="text-sm">
-                            {providerText('liveFormat')}
-                            <select
-                              name="liveFormat"
-                              defaultValue={connection.liveFormat ?? 'm3u8'}
-                              className={field}
-                            >
-                              <option value="m3u8">HLS (.m3u8)</option>
-                              <option value="ts">MPEG-TS (.ts)</option>
-                            </select>
-                          </label>
-                        </>
-                      )}
                       {connection.type === 'stalker' && (
                         <>
                           <label className="text-sm">
@@ -525,17 +558,6 @@ export function SettingsPanel({
                           </label>
                         </>
                       )}
-                      {connection.type === 'm3u' && (
-                        <label className="text-sm">
-                          {providerText('playlist')}
-                          <input
-                            name="url"
-                            type="url"
-                            defaultValue={connection.url}
-                            className={field}
-                          />
-                        </label>
-                      )}
                       <Button type="submit" disabled={busy}>
                         {common('save')}
                       </Button>
@@ -544,7 +566,11 @@ export function SettingsPanel({
                 </div>
               ))}
           </div>
-          <AddProviderModal />
+          {!connections.length && <AddProviderModal />}
+          <ProvisionPanel
+            reachable={pairingEnabled && pairingReachable}
+            hasSource={!!connections.length}
+          />
         </section>
         <section
           id="device"

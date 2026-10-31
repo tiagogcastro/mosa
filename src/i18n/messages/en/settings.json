@@ -17,7 +17,7 @@
     "autoNext": "Automatically play next episode",
     "speed": "Playback speed (video)",
     "formatNote": "The source determines the video format. Choosing M3U or HTML cannot convert a stream. Direct MPEG-TS may not work in this browser.",
-    "providerDescription": "Only the active source appears in the catalog; favorites from other sources remain saved.",
+    "providerDescription": "This profile has at most one source. Create another profile to use another source.",
     "neverSynced": "Never synchronized",
     "active": "Active",
     "selectProvider": "Select",
@@ -37,9 +37,21 @@
     "restoreChannel": "Restore last channel when opening Live TV",
     "qrNote": "This QR contains only this installation ID. It does not grant access or authenticate anyone; device pairing requires a reachable, protected server with temporary codes.",
     "actions": "Source actions",
-    "passwordSafety": "The saved password remains protected and is not displayed. Leave blank to keep it.",
+    "passwordSafety": "The saved password is not loaded until you select the eye icon. Leave blank to keep it.",
     "remoteExplanation": "Want to use the same catalog on another device? A provider MAC cannot do that. Use the invitation QR below: both devices access this Mosa without copying playlists. An owner password and reachable HTTPS address are required; the server stays local by default.",
     "aboutDetails": "Mosa organizes authorized sources and data on your local server. It does not provide subscriptions, streams, DRM, media relaying or transcoding. Availability, EPG and compatibility depend on your provider and browser.",
-    "copyright": "© 2026 Mosa. All rights reserved. Trademarks, artwork and videos belong to their respective owners."
+    "copyright": "© 2026 Mosa. All rights reserved. Trademarks, artwork and videos belong to their respective owners.",
+    "showPassword": "Show saved password",
+    "hidePassword": "Hide password",
+    "revealFailed": "Could not show the password.",
+    "restrictions": "Content restrictions",
+    "defaultStreamFormat": "Default live stream format",
+    "automaticFormat": "Automatic",
+    "formatDescription": "Used by Xtream sources without an override. This does not transcode streams.",
+    "saved": "Preference saved",
+    "sourceRemoved": "Source removed",
+    "sourceUpdated": "Source updated",
+    "operationFailed": "Could not complete the operation.",
+    "network": "Network & DNS"
   }
 }

@@ -1,0 +1,23 @@
+{
+  "Profiles": {
+    "profile": "Profile",
+    "create": "Create profile",
+    "edit": "Edit profile",
+    "name": "Profile name",
+    "color": "Avatar color",
+    "save": "Save profile",
+    "delete": "Delete profile",
+    "deleteConfirm": "Delete this profile and its source? Its catalog, favorites and history will be removed.",
+    "switchError": "Could not switch profiles.",
+    "saveError": "Could not save profile.",
+    "sourceMissing": "No source connected",
+    "colors": {
+      "blue": "Blue",
+      "mint": "Mint",
+      "rose": "Rose",
+      "amber": "Amber",
+      "violet": "Violet"
+    },
+    "cancel": "Cancel"
+  }
+}

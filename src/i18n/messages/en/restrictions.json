@@ -1,0 +1,23 @@
+{
+  "Restrictions": {
+    "title": "Content restrictions",
+    "description": "Blocked content disappears from this profile, but favorites and history are preserved. The owner can unblock it here.",
+    "live_category": "TV categories",
+    "live_channel": "Channels",
+    "movie_category": "Movie categories",
+    "series_category": "Series categories",
+    "search": "Search this list",
+    "filter": "Show",
+    "all": "All",
+    "visible": "Visible",
+    "blocked": "Blocked",
+    "blockedCount": "{count} blocked in this section",
+    "blockAdult": "Block identified adult categories",
+    "empty": "No items found.",
+    "error": "Could not update restrictions.",
+    "pages": "Pages",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {page} of {total}"
+  }
+}

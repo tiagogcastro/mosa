@@ -35,7 +35,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<'/api
         server: z.url().optional(),
         username: z.string().min(1).optional(),
         password: z.string().min(1).optional(),
-        liveFormat: z.enum(['m3u8', 'ts']).optional(),
+        liveFormat: z.enum(['auto', 'm3u8', 'ts']).nullable().optional(),
         url: z.url().optional(),
         mac: z
           .string()
@@ -70,7 +70,10 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<'/api
                 server: edit.data.server ?? stored.server,
                 username: edit.data.username ?? stored.username,
                 password: edit.data.password ?? stored.password,
-                liveFormat: edit.data.liveFormat ?? stored.liveFormat,
+                liveFormat:
+                  edit.data.liveFormat === null
+                    ? undefined
+                    : (edit.data.liveFormat ?? stored.liveFormat),
                 name: edit.data.name,
               }
             : stored.type === 'stalker'

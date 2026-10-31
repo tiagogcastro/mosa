@@ -116,10 +116,10 @@ export function LiveTv({
         <h1 className="font-heading text-3xl font-semibold">{t('live')}</h1>
         <p className="mt-1 text-sm text-muted">{t('importedCount', { count: total })}</p>
       </div>
-      <div className="grid min-h-0 min-w-0 flex-1 gap-4 lg:grid-cols-[minmax(210px,25%)_minmax(270px,33%)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(240px,26%)_minmax(310px,32%)_minmax(0,1fr)]">
+      <div className="relative grid min-h-0 min-w-0 flex-1 gap-4 lg:grid-cols-[minmax(260px,280px)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(170px,185px)_minmax(260px,290px)_minmax(0,1fr)]">
         <nav
           aria-label={t('allCategories')}
-          className={`${showCategories ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-col overflow-hidden lg:flex`}
+          className={`${showCategories ? 'flex' : 'hidden'} z-10 min-h-0 min-w-0 flex-col overflow-hidden bg-background lg:absolute lg:inset-y-0 lg:left-0 lg:w-48 lg:rounded-xl lg:p-2 lg:shadow-xl xl:static xl:flex xl:w-auto xl:p-0 xl:shadow-none`}
         >
           <div className="shrink-0 pb-3">
             <h2 className="px-3 pb-2 text-sm font-semibold text-muted">{t('allCategories')}</h2>
@@ -151,13 +151,13 @@ export function LiveTv({
                     }}
                     aria-current={category === name ? 'page' : undefined}
                     aria-label={`${name || t('allCategories')} · ${count}`}
-                    className={`relative flex min-h-11 items-center gap-2 rounded-lg px-3 text-[15px] ${category === name ? 'bg-elevated font-semibold text-primary before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-primary' : 'text-muted hover:bg-elevated hover:text-foreground'}`}
+                    className={`relative flex min-h-11 min-w-0 items-center gap-2 rounded-lg px-2.5 text-sm ${category === name ? 'bg-elevated font-semibold text-primary before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-primary' : 'text-muted hover:bg-elevated hover:text-foreground'}`}
                   >
                     <Icon size={17} className="shrink-0" />
                     <span className="min-w-0 flex-1 truncate">
                       {name ? presentation.name : t('allCategories')}
                     </span>
-                    <span className="text-xs tabular-nums opacity-70">{count}</span>
+                    <span className="shrink-0 text-xs tabular-nums opacity-70">{count}</span>
                   </Link>
                 </Tooltip>
               );
@@ -174,7 +174,7 @@ export function LiveTv({
               <button
                 onClick={() => setShowCategories(!showCategories)}
                 aria-expanded={showCategories}
-                className="rounded-lg bg-elevated p-2 lg:hidden"
+                className="rounded-lg bg-elevated p-2 xl:hidden"
                 aria-label={t('allCategories')}
               >
                 <SlidersHorizontal size={20} />

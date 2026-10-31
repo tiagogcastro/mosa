@@ -1,0 +1,23 @@
+{
+  "Network": {
+    "title": "Red y DNS",
+    "description": "Diagnóstico de conexión sin contraseñas ni URL de reproducción.",
+    "origin": "Origen de Mosa",
+    "protocol": "Protocolo",
+    "providerHost": "Servidor de la fuente",
+    "status": "Estado de la fuente",
+    "format": "Formato preferido",
+    "browser": "Navegador",
+    "lastIssue": "Último problema de reproducción",
+    "none": "Ninguno registrado",
+    "notConnected": "Sin fuente conectada",
+    "corsNote": "CORS lo controla el servidor de medios. Manifiestos, segmentos y redirecciones pueden necesitar permiso para el origen de Mosa. Cambiar el DNS del proveedor no evita CORS ni convierte vídeo.",
+    "localNote": "127.0.0.1 es local. Para otros dispositivos hace falta un servidor HTTPS protegido y accesible; esto no da acceso a la suscripción del proveedor.",
+    "reportTitle": "Información de red de Mosa",
+    "copyTechnical": "Copiar información técnica",
+    "copySupport": "Copiar solicitud de soporte CORS",
+    "supportRequest": "Por favor, compruebe si su servidor de streaming permite reproducción desde el origen {origin}. El navegador puede requerir encabezados CORS en manifiestos, segmentos y recursos redirigidos. No se incluyen credenciales.",
+    "copied": "Información copiada",
+    "copyFailed": "No se pudo copiar."
+  }
+}

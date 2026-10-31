@@ -6,7 +6,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Clapperboard,
-  Radio,
   Film,
   House,
   Search,
@@ -18,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { GlobalSearch } from '@/components/common/global-search';
 import { Tooltip, TooltipProvider } from '@/components/ui/tooltip';
+import { ProfileSwitcher } from '@/features/profiles/profile-switcher';
 
 const links = [
   { href: '/', key: 'home', Icon: House },
@@ -30,11 +30,15 @@ const links = [
 export function AppShell({
   children,
   initialCollapsed,
-  providerName,
+  profiles,
+  activeProfileId,
+  profileOwner,
 }: {
   children: React.ReactNode;
   initialCollapsed: boolean;
-  providerName: string | null;
+  profiles: { id: string; name: string; avatarColor: string; providerId: string | null }[];
+  activeProfileId: string;
+  profileOwner: boolean;
 }) {
   const navigation = useTranslations('Navigation');
   const common = useTranslations('Common');
@@ -120,23 +124,14 @@ export function AppShell({
             </Tooltip>
           </nav>
           <div className="mt-auto space-y-1 px-2 pb-5">
-            {!collapsed && providerName && (
-              <Link
-                href="/settings"
-                aria-label={`${navigation('provider')}: ${providerName}`}
-                className="mx-1 mb-2 flex items-center gap-3 rounded-xl bg-elevated/70 px-3 py-3 hover:bg-elevated"
-              >
-                <Radio size={17} className="shrink-0 text-primary" />
-                <span className="min-w-0">
-                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-muted">
-                    {navigation('provider')}
-                  </span>
-                  <span className="block truncate text-sm font-semibold text-foreground">
-                    {providerName}
-                  </span>
-                </span>
-              </Link>
-            )}
+            <div className="mx-1 mb-2">
+              <ProfileSwitcher
+                profiles={profiles}
+                activeId={activeProfileId}
+                collapsed={collapsed}
+                owner={profileOwner}
+              />
+            </div>
             <Tooltip label={navigation('settings')}>
               <Link
                 href="/settings"
@@ -153,11 +148,18 @@ export function AppShell({
         <main
           className={`mx-auto min-w-0 max-w-[1800px] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-7 md:px-8 md:pb-10 ${['/live', '/movies', '/series', '/settings'].includes(pathname) ? 'lg:h-dvh lg:overflow-hidden' : 'min-h-dvh'}`}
         >
-          <div className="mb-6 flex items-center justify-between md:hidden">
+          <div className="mb-6 flex items-center justify-between gap-3 md:hidden">
             <Link href="/" aria-label="Mosa" className="flex items-center gap-2">
               <Image src="/brand/symbol.svg" alt="" width={28} height={28} />
               <span className="font-heading text-lg font-semibold">mosa</span>
             </Link>
+            <div className="ml-auto w-40">
+              <ProfileSwitcher
+                profiles={profiles}
+                activeId={activeProfileId}
+                owner={profileOwner}
+              />
+            </div>
             <button
               onClick={() => setSearchOpen(true)}
               aria-label={common('search')}

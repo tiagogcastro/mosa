@@ -3,6 +3,7 @@ import { and, asc, desc, eq, gt, like, lt, or, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { favorites, media, progress, providers } from '@/db/schema';
 import { activeProviderId } from '@/features/providers/active';
+import { visibleMediaCondition } from '@/features/catalog/restrictions';
 
 function activeCondition() {
   return eq(providers.id, activeProviderId() ?? '');
@@ -38,7 +39,7 @@ export function catalog(
   size = 48,
   sort: 'recent' | 'alpha' = 'recent',
 ) {
-  const conditions = [eq(media.type, type), activeCondition()];
+  const conditions = [eq(media.type, type), activeCondition(), visibleMediaCondition()];
   if (search) {
     conditions.push(searchCondition(search));
   }
@@ -68,7 +69,7 @@ export function catalog(
     .all();
 }
 export function catalogCount(type: string, search = '', category = '') {
-  const conditions = [eq(media.type, type), activeCondition()];
+  const conditions = [eq(media.type, type), activeCondition(), visibleMediaCondition()];
   if (search) {
     conditions.push(searchCondition(search));
   }
@@ -89,7 +90,7 @@ export function catalogCategories(type: string) {
     .select({ name: media.category, count: sql<number>`count(*)` })
     .from(media)
     .innerJoin(providers, eq(providers.id, media.providerId))
-    .where(and(eq(media.type, type), activeCondition()))
+    .where(and(eq(media.type, type), activeCondition(), visibleMediaCondition()))
     .groupBy(media.category)
     .orderBy(asc(media.category))
     .all()
@@ -115,6 +116,7 @@ export function catalogPageForItem(
         and(
           eq(media.providerId, item.providerId),
           eq(media.type, item.type),
+          visibleMediaCondition(),
           item.category ? eq(media.category, item.category) : undefined,
           before,
         ),
@@ -145,7 +147,7 @@ export function mediaById(id: string) {
     .innerJoin(providers, eq(providers.id, media.providerId))
     .leftJoin(favorites, eq(favorites.mediaId, media.id))
     .leftJoin(progress, eq(progress.mediaId, media.id))
-    .where(and(eq(media.id, id), activeCondition()))
+    .where(and(eq(media.id, id), activeCondition(), visibleMediaCondition()))
     .get();
 }
 export function saved() {
@@ -160,7 +162,7 @@ export function saved() {
     .innerJoin(providers, eq(providers.id, media.providerId))
     .innerJoin(favorites, eq(favorites.mediaId, media.id))
     .leftJoin(progress, eq(progress.mediaId, media.id))
-    .where(activeCondition())
+    .where(and(activeCondition(), visibleMediaCondition()))
     .orderBy(desc(favorites.createdAt))
     .limit(80)
     .all();
@@ -177,7 +179,14 @@ export function continuing() {
     .innerJoin(media, eq(progress.mediaId, media.id))
     .innerJoin(providers, eq(providers.id, media.providerId))
     .leftJoin(favorites, eq(favorites.mediaId, media.id))
-    .where(and(eq(progress.completed, false), activeCondition(), sql`${progress.position} > 0`))
+    .where(
+      and(
+        eq(progress.completed, false),
+        activeCondition(),
+        visibleMediaCondition(),
+        sql`${progress.position} > 0`,
+      ),
+    )
     .orderBy(desc(progress.watchedAt))
     .limit(24)
     .all();
@@ -194,7 +203,7 @@ export function recentChannels() {
     .innerJoin(media, eq(progress.mediaId, media.id))
     .innerJoin(providers, eq(providers.id, media.providerId))
     .leftJoin(favorites, eq(favorites.mediaId, media.id))
-    .where(and(eq(media.type, 'live'), activeCondition()))
+    .where(and(eq(media.type, 'live'), activeCondition(), visibleMediaCondition()))
     .orderBy(desc(progress.watchedAt))
     .limit(16)
     .all();

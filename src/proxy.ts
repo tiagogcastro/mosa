@@ -17,8 +17,10 @@ export default function proxy(request: NextRequest) {
     return NextResponse.json({ error: 'Protected server configuration required' }, { status: 403 });
   }
   if (authEnabled()) {
-    const guestPage = /^\/(?:pt-BR|en|es)\/(?:login|pair)(?:\/|$)/.test(pathname);
-    const guestApi = /^\/api\/auth\/(?:login|redeem)(?:\/|$)/.test(pathname);
+    const guestPage = /^\/(?:pt-BR|en|es)\/(?:login|pair|provide)(?:\/|$)/.test(pathname);
+    const guestApi =
+      /^\/api\/auth\/(?:login|redeem)(?:\/|$)/.test(pathname) ||
+      pathname === '/api/provision/submit';
     if (!guestPage && !guestApi) {
       const role = roleForRequest(request);
       if (!role) {

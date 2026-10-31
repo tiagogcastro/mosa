@@ -3,7 +3,6 @@ import { Link } from '@/i18n/navigation';
 import { activeProviderId } from '@/features/providers/active';
 import { catalog, continuing, recentChannels, saved } from '@/features/catalog/queries';
 import { MediaSection } from '@/components/media/media-section';
-import { AddProviderModal } from '@/features/providers/add-provider-modal';
 import { NoActiveSource } from '@/components/media/no-active-source';
 import { MediaArtwork } from '@/components/media/media-artwork';
 
@@ -51,7 +50,6 @@ export default async function Home() {
                 {n('live')}
               </Link>
             )}
-            <AddProviderModal className="!bg-elevated !text-foreground" />
           </div>
         </div>
       </section>

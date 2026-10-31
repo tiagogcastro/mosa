@@ -1,0 +1,23 @@
+{
+  "Network": {
+    "title": "Network & DNS",
+    "description": "Connection diagnostics without passwords or playback URLs.",
+    "origin": "Mosa origin",
+    "protocol": "Protocol",
+    "providerHost": "Provider host",
+    "status": "Source status",
+    "format": "Preferred format",
+    "browser": "Browser",
+    "lastIssue": "Last playback issue",
+    "none": "None recorded",
+    "notConnected": "No source connected",
+    "corsNote": "CORS is controlled by the media server. Manifests, segments and redirects may all need permission for Mosa's origin. Changing the provider DNS does not bypass CORS or transcode video.",
+    "localNote": "127.0.0.1 is local. Access from other devices requires a protected, reachable HTTPS server; this does not grant access to a provider subscription.",
+    "reportTitle": "Mosa Network Information",
+    "copyTechnical": "Copy technical information",
+    "copySupport": "Copy CORS support request",
+    "supportRequest": "Please verify whether your streaming server allows playback from the origin {origin}. The browser may require CORS headers on manifests, media segments and redirected resources. No credentials are included.",
+    "copied": "Information copied",
+    "copyFailed": "Could not copy."
+  }
+}

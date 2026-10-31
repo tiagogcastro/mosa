@@ -17,7 +17,7 @@
     "autoNext": "Reproducir el siguiente episodio automáticamente",
     "speed": "Velocidad de reproducción (video)",
     "formatNote": "La fuente determina el formato de video. M3U o HTML no convierten una transmisión. MPEG-TS directo puede no funcionar en este navegador.",
-    "providerDescription": "Solo la fuente activa aparece en el catálogo; se conservan los favoritos de otras fuentes.",
+    "providerDescription": "Este perfil tiene como máximo una fuente. Crea otro perfil para usar una fuente diferente.",
     "neverSynced": "Nunca sincronizada",
     "active": "Activa",
     "selectProvider": "Seleccionar",
@@ -37,9 +37,21 @@
     "restoreChannel": "Restaurar el último canal al abrir TV",
     "qrNote": "Este QR contiene solo el ID de esta instalación. No concede acceso ni autentica a nadie; vincular dispositivos requiere un servidor accesible y protegido con códigos temporales.",
     "actions": "Acciones de la fuente",
-    "passwordSafety": "La contraseña guardada permanece protegida y no se muestra. Déjala vacía para conservarla.",
+    "passwordSafety": "La contraseña guardada no se carga hasta tocar el icono del ojo. Déjala vacía para conservarla.",
     "remoteExplanation": "¿Quieres usar el mismo catálogo en otro dispositivo? El MAC del proveedor no sirve para eso. Usa el QR de invitación: ambos dispositivos acceden a este Mosa sin copiar listas. Hace falta contraseña del propietario y una dirección HTTPS accesible; por defecto el servidor sigue siendo local.",
     "aboutDetails": "Mosa organiza fuentes autorizadas y datos en tu servidor local. No proporciona suscripciones, transmisiones, DRM, retransmisión ni transcodificación. Disponibilidad, EPG y compatibilidad dependen del proveedor y del navegador.",
-    "copyright": "© 2026 Mosa. Todos los derechos reservados. Las marcas, imágenes y vídeos pertenecen a sus respectivos titulares."
+    "copyright": "© 2026 Mosa. Todos los derechos reservados. Las marcas, imágenes y vídeos pertenecen a sus respectivos titulares.",
+    "showPassword": "Mostrar contraseña guardada",
+    "hidePassword": "Ocultar contraseña",
+    "revealFailed": "No se pudo mostrar la contraseña.",
+    "restrictions": "Restricciones de contenido",
+    "defaultStreamFormat": "Formato predeterminado de TV en vivo",
+    "automaticFormat": "Automático",
+    "formatDescription": "Para fuentes Xtream sin formato propio. No convierte transmisiones.",
+    "saved": "Preferencia guardada",
+    "sourceRemoved": "Fuente eliminada",
+    "sourceUpdated": "Fuente actualizada",
+    "operationFailed": "No se pudo completar la operación.",
+    "network": "Red y DNS"
   }
 }

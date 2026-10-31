@@ -16,6 +16,61 @@ export const providers = sqliteTable('providers', {
   syncedAt: integer('synced_at', { mode: 'timestamp' }),
   status: text('status').notNull().default('ready'),
 });
+export const profiles = sqliteTable(
+  'profiles',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    avatarColor: text('avatar_color').notNull().default('blue'),
+    providerId: text('provider_id').references(() => providers.id, { onDelete: 'set null' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  },
+  (table) => [uniqueIndex('profiles_provider_id_unique').on(table.providerId)],
+);
+export const contentRestrictions = sqliteTable(
+  'content_restrictions',
+  {
+    id: text('id').primaryKey(),
+    profileId: text('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    providerId: text('provider_id')
+      .notNull()
+      .references(() => providers.id, { onDelete: 'cascade' }),
+    targetType: text('target_type').notNull(),
+    targetId: text('target_id').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('content_restrictions_unique').on(
+      table.profileId,
+      table.providerId,
+      table.targetType,
+      table.targetId,
+    ),
+    index('content_restrictions_lookup').on(table.profileId, table.providerId, table.targetType),
+  ],
+);
+export const provisionRequests = sqliteTable(
+  'provision_requests',
+  {
+    id: text('id').primaryKey(),
+    tokenHash: text('token_hash').notNull().unique(),
+    profileId: text('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    status: text('status').notNull().default('open'),
+    encryptedPayload: text('encrypted_payload'),
+    sourceType: text('source_type'),
+    sourceName: text('source_name'),
+    sourceHost: text('source_host'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    submittedAt: integer('submitted_at', { mode: 'timestamp' }),
+  },
+  (table) => [index('provision_profile_status').on(table.profileId, table.status)],
+);
 export const media = sqliteTable(
   'media',
   {

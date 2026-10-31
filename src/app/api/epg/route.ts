@@ -5,6 +5,7 @@ import { media, providers } from '@/db/schema';
 import { activeProviderId } from '@/features/providers/active';
 import { xtreamEpg, type XtreamConfig } from '@/features/providers/adapters/xtream';
 import { decrypt } from '@/lib/security/crypto';
+import { visibleMediaCondition } from '@/features/catalog/restrictions';
 
 export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
         eq(media.type, 'live'),
         eq(providers.type, 'xtream'),
         eq(providers.id, activeProviderId() ?? ''),
+        visibleMediaCondition(),
       ),
     )
     .get();

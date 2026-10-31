@@ -1,0 +1,23 @@
+{
+  "Restrictions": {
+    "title": "Restrições de conteúdo",
+    "description": "O conteúdo bloqueado desaparece do perfil, mas seus favoritos e histórico são preservados. O proprietário pode desbloquear por aqui.",
+    "live_category": "Categorias de TV",
+    "live_channel": "Canais",
+    "movie_category": "Categorias de filmes",
+    "series_category": "Categorias de séries",
+    "search": "Buscar nesta lista",
+    "filter": "Exibir",
+    "all": "Todos",
+    "visible": "Visível",
+    "blocked": "Bloqueado",
+    "blockedCount": "{count} bloqueados nesta seção",
+    "blockAdult": "Bloquear categorias adultas identificadas",
+    "empty": "Nenhum item encontrado.",
+    "error": "Não foi possível atualizar as restrições.",
+    "pages": "Páginas",
+    "previous": "Anterior",
+    "next": "Próxima",
+    "page": "Página {page} de {total}"
+  }
+}

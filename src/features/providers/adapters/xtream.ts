@@ -6,7 +6,7 @@ export const xtreamConfig = z.object({
   server: z.url(),
   username: z.string().min(1).max(256),
   password: z.string().min(1).max(256),
-  liveFormat: z.enum(['m3u8', 'ts']).optional(),
+  liveFormat: z.enum(['auto', 'm3u8', 'ts']).optional(),
 });
 export type XtreamConfig = z.infer<typeof xtreamConfig>;
 const object = z.record(z.string(), z.unknown());
@@ -166,7 +166,12 @@ export async function importXtream(config: XtreamConfig): Promise<ImportItem[]> 
 }
 export function xtreamSource(config: XtreamConfig, type: string, id: string, extension: string) {
   const path = type === 'live' ? 'live' : type === 'episode' ? 'series' : 'movie';
-  const preferred = type === 'live' ? (config.liveFormat ?? extension) : extension;
+  const preferred =
+    type === 'live'
+      ? config.liveFormat === 'auto' || !config.liveFormat
+        ? extension
+        : config.liveFormat
+      : extension;
   const safeExtension = /^[a-z\d]{2,5}$/i.test(preferred) ? preferred : 'mp4';
   return new URL(
     `${path}/${encodeURIComponent(config.username)}/${encodeURIComponent(config.password)}/${encodeURIComponent(id)}.${safeExtension}`,

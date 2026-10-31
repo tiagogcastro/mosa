@@ -368,6 +368,11 @@ export function Player({
     return `${String(Math.floor(seconds / 3600)).padStart(2, '0')}:${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
   }
   const control = 'rounded-lg p-2 text-foreground hover:bg-elevated';
+  useEffect(() => {
+    if (error && detail) {
+      window.localStorage.setItem('mosa:last-playback-issue', detail);
+    }
+  }, [error, detail]);
   return (
     <div
       ref={frame}

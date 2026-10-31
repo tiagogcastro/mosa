@@ -1,0 +1,23 @@
+{
+  "Profiles": {
+    "profile": "Perfil",
+    "create": "Criar perfil",
+    "edit": "Editar perfil",
+    "name": "Nome do perfil",
+    "color": "Cor do avatar",
+    "save": "Salvar perfil",
+    "delete": "Excluir perfil",
+    "deleteConfirm": "Excluir este perfil e sua fonte? O catálogo, favoritos e histórico deste perfil serão removidos.",
+    "switchError": "Não foi possível mudar de perfil.",
+    "saveError": "Não foi possível salvar o perfil.",
+    "sourceMissing": "Sem fonte conectada",
+    "colors": {
+      "blue": "Azul",
+      "mint": "Verde",
+      "rose": "Rosa",
+      "amber": "Âmbar",
+      "violet": "Violeta"
+    },
+    "cancel": "Cancelar"
+  }
+}

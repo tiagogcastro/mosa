@@ -1,131 +1,132 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import { CircleAlert, CircleCheck, LoaderCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PasswordEditor } from '@/features/providers/password-editor';
 import { useRouter } from '@/i18n/navigation';
-import { parseProviderMessage } from '@/features/providers/parse-message';
 
-export function ConnectionForm({ onSuccess }: { onSuccess?: () => void } = {}) {
-  const translations = useTranslations('Providers');
+type ConnectionType = 'xtream' | 'm3u';
+export type EditingSource = {
+  id: string;
+  type: ConnectionType;
+  name: string;
+  server?: string;
+  username?: string;
+  url?: string;
+  local?: boolean;
+  liveFormat?: 'auto' | 'm3u8' | 'ts';
+};
+type Feedback = { status: 'success' | 'error'; message: string; detail?: string };
+
+export function ConnectionForm({
+  onSuccess,
+  onCancel,
+  editing,
+}: {
+  onSuccess?: () => void;
+  onCancel?: () => void;
+  editing?: EditingSource;
+} = {}) {
+  const t = useTranslations('Providers');
   const router = useRouter();
-  const [connectionType, setConnectionType] = useState<'xtream' | 'm3u' | 'stalker' | 'quick'>(
-    'quick',
+  const [type, setType] = useState<ConnectionType>(editing?.type ?? 'xtream');
+  const [name, setName] = useState(editing?.name ?? t('defaultName'));
+  const [server, setServer] = useState(editing?.server ?? '');
+  const [username, setUsername] = useState(editing?.username ?? '');
+  const [url, setUrl] = useState(editing?.url ?? '');
+  const [epgUrl, setEpgUrl] = useState('');
+  const [format, setFormat] = useState<'global' | 'auto' | 'm3u8' | 'ts'>(
+    editing?.liveFormat ?? 'global',
   );
-  const [playlistUrl, setPlaylistUrl] = useState('');
-  const [messageStatus, setMessageStatus] = useState<
-    'empty' | 'ready' | 'missingServer' | 'missingCredentials'
-  >('empty');
-  const advancedRef = useRef<HTMLDetailsElement>(null);
-  const [liveFormat, setLiveFormat] = useState<'m3u8' | 'ts'>('m3u8');
-  const [savedServers, setSavedServers] = useState<{ id: string; name: string; server: string }[]>(
-    [],
-  );
-  useEffect(() => {
-    if (connectionType !== 'quick') {
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState<'checking' | 'saving' | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const input =
+    'min-h-11 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-primary';
+
+  async function submit(form: HTMLFormElement, checkOnly: boolean) {
+    if (busy) {
       return;
     }
-    let active = true;
-    void fetch('/api/providers/servers')
-      .then((response) => (response.ok ? response.json() : null))
-      .then((result: { servers?: typeof savedServers } | null) => {
-        if (active && result?.servers) {
-          setSavedServers(result.servers);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [connectionType]);
-  const [playlistFile, setPlaylistFile] = useState<File | null>(null);
-  const [isBusy, setIsBusy] = useState(false);
-  const [feedback, setFeedback] = useState('');
-
-  async function submitConnection(formElement: HTMLFormElement, checkOnly: boolean) {
-    setIsBusy(true);
-    setFeedback('');
-
+    setBusy(checkOnly ? 'checking' : 'saving');
+    setFeedback(null);
+    const notification = checkOnly ? null : toast.loading(editing ? t('updating') : t('importing'));
     try {
-      const form = new FormData(formElement);
-      if (connectionType === 'quick') {
-        if (!form.get('username') || !form.get('password')) {
-          setFeedback(translations('missingCredentials'));
-          if (advancedRef.current) {
-            advancedRef.current.open = true;
+      const formData = new FormData(form);
+      const password = String(formData.get('password') ?? '');
+      const data = editing
+        ? {
+            action: 'edit',
+            name: name.trim(),
+            server: type === 'xtream' ? server.trim() : undefined,
+            username: type === 'xtream' ? username.trim() : undefined,
+            password: password || undefined,
+            url: type === 'm3u' && !editing.local ? url.trim() : undefined,
+            liveFormat: type === 'xtream' ? (format === 'global' ? null : format) : undefined,
           }
-          return;
-        }
-        if (!form.get('server') && !form.get('serverId')) {
-          setFeedback(translations('missingServer'));
-          if (advancedRef.current) {
-            advancedRef.current.open = true;
-          }
-          return;
-        }
-      }
-      const base = { type: connectionType, name: String(form.get('name') || '') };
-      const connection =
-        connectionType === 'xtream'
+        : type === 'xtream'
           ? {
-              ...base,
-              server: String(form.get('server') || ''),
-              username: String(form.get('username') || ''),
-              password: String(form.get('password') || ''),
-              liveFormat,
+              type,
+              name: name.trim(),
+              server: server.trim(),
+              username: username.trim(),
+              password,
+              liveFormat: format === 'global' ? undefined : format,
             }
-          : connectionType === 'quick'
-            ? {
-                ...base,
-                username: String(form.get('username') || ''),
-                password: String(form.get('password') || ''),
-                server: String(form.get('server') || '') || undefined,
-                serverId: String(form.get('serverId') || '') || undefined,
-                liveFormat,
-              }
-            : connectionType === 'stalker'
-              ? {
-                  ...base,
-                  server: String(form.get('server') || ''),
-                  mac: String(form.get('mac') || ''),
-                }
-              : {
-                  ...base,
-                  url: form.get('url') ? String(form.get('url')) : undefined,
-                  content: playlistFile ? await playlistFile.text() : undefined,
-                };
-
-      const response = await fetch(checkOnly ? '/api/providers/check' : '/api/providers', {
-        method: 'POST',
+          : {
+              type,
+              name: name.trim(),
+              url: url.trim() || undefined,
+              content: file ? await file.text() : undefined,
+              epgUrl: epgUrl.trim() || undefined,
+            };
+      const path = editing
+        ? checkOnly
+          ? `/api/providers/${encodeURIComponent(editing.id)}/check`
+          : `/api/providers/${encodeURIComponent(editing.id)}`
+        : checkOnly
+          ? '/api/providers/check'
+          : '/api/providers';
+      const response = await fetch(path, {
+        method: editing ? (checkOnly ? 'POST' : 'PATCH') : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(connection),
+        body: JSON.stringify(data),
       });
-
-      const result: unknown = await response.json();
+      const result: { count?: number; error?: { code?: string } } = await response.json();
       if (!response.ok) {
-        const code =
-          result &&
-          typeof result === 'object' &&
-          'error' in result &&
-          result.error &&
-          typeof result.error === 'object' &&
-          'code' in result.error
-            ? result.error.code
-            : null;
-        setFeedback(translations(code === 'SOURCE_TOO_LARGE' ? 'largePlaylist' : 'invalid'));
+        const detail =
+          result.error?.code === 'SOURCE_TOO_LARGE'
+            ? t('largePlaylist')
+            : result.error?.code === 'LOCAL_FILE_REQUIRED'
+              ? t('localFileRequired')
+              : t('connectionHelp');
+        setFeedback({ status: 'error', message: t('connectionFailed'), detail });
+        if (notification) {
+          toast.error(t('importFailed'), { id: notification, description: detail });
+        }
         return;
       }
-
       if (checkOnly) {
-        const count =
-          result && typeof result === 'object' && 'count' in result ? result.count : null;
-        setFeedback(
-          typeof count === 'number'
-            ? translations('connectedCount', { count })
-            : translations('connected'),
-        );
+        setFeedback({
+          status: 'success',
+          message: type === 'm3u' ? t('playlistLoaded') : t('connectionSuccessful'),
+          detail:
+            typeof result.count === 'number'
+              ? t('connectedCount', { count: result.count })
+              : t('providerResponded'),
+        });
       } else {
+        toast.success(editing ? t('sourceUpdated') : t('catalogImported'), {
+          id: notification ?? undefined,
+          description:
+            typeof result.count === 'number'
+              ? t('connectedCount', { count: result.count })
+              : undefined,
+        });
         onSuccess?.();
         if (!onSuccess) {
           router.push('/');
@@ -133,291 +134,199 @@ export function ConnectionForm({ onSuccess }: { onSuccess?: () => void } = {}) {
         router.refresh();
       }
     } catch {
-      setFeedback(translations('invalid'));
+      setFeedback({ status: 'error', message: t('connectionFailed'), detail: t('connectionHelp') });
+      if (notification) {
+        toast.error(t('importFailed'), { id: notification });
+      }
     } finally {
-      setIsBusy(false);
+      setBusy(null);
     }
   }
-
-  const inputClass =
-    'h-11 w-full rounded-lg border border-border bg-background px-4 text-foreground';
 
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        void submitConnection(event.currentTarget, false);
+        void submit(event.currentTarget, false);
       }}
-      className="grid gap-5 rounded-xl border border-border bg-surface p-6"
+      className="space-y-4"
     >
-      {connectionType !== 'quick' && (
-        <p className="text-xs leading-relaxed text-muted">
-          {translations(`${connectionType}Guide`)}
-        </p>
-      )}
-      {connectionType !== 'quick' && (
-        <label className="grid gap-2 text-sm">
-          {translations('name')}
-          <input
-            name="name"
-            required
-            maxLength={80}
-            defaultValue={translations('defaultName')}
-            className={inputClass}
-          />
-        </label>
-      )}
-
-      {connectionType === 'xtream' ? (
+      <Tabs
+        value={type}
+        onValueChange={(value) => {
+          setType(value as ConnectionType);
+          setFeedback(null);
+        }}
+      >
+        <TabsList
+          aria-label={t('type')}
+          className="grid grid-cols-2 gap-1 rounded-xl bg-elevated p-1"
+        >
+          <TabsTrigger
+            value="xtream"
+            disabled={!!editing && editing.type !== 'xtream'}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-muted focus-visible:outline-2 focus-visible:outline-primary data-[state=active]:bg-surface data-[state=active]:text-primary"
+          >
+            Xtream Codes
+          </TabsTrigger>
+          <TabsTrigger
+            value="m3u"
+            disabled={!!editing && editing.type !== 'm3u'}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-muted focus-visible:outline-2 focus-visible:outline-primary data-[state=active]:bg-surface data-[state=active]:text-primary"
+          >
+            {t('m3uTab')}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <label className="block space-y-1.5 text-sm font-medium">
+        {t('name')}
+        <input
+          name="name"
+          required
+          maxLength={80}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          className={input}
+        />
+      </label>
+      {type === 'xtream' ? (
         <>
-          <label className="grid gap-2 text-sm">
-            {translations('server')}
-            <input name="server" type="url" required className={inputClass} />
-          </label>
-          <label className="grid gap-2 text-sm">
-            {translations('username')}
-            <input name="username" required className={inputClass} />
-          </label>
-          <label className="grid gap-2 text-sm">
-            {translations('password')}
-            <input name="password" type="password" required className={inputClass} />
-          </label>
-          <label className="grid gap-2 text-sm">
-            {translations('liveFormat')}
-            <select
-              value={liveFormat}
-              onChange={(event) => setLiveFormat(event.target.value as 'm3u8' | 'ts')}
-              className={inputClass}
-            >
-              <option value="m3u8">HLS (.m3u8)</option>
-              <option value="ts">MPEG-TS (.ts)</option>
-            </select>
-          </label>
-        </>
-      ) : connectionType === 'quick' ? (
-        <>
-          <label className="grid gap-2 text-sm">
-            {translations('pasteCredentials')}
-            <textarea
-              rows={4}
-              className={`${inputClass} h-auto py-3`}
-              placeholder={translations('pasteHint')}
-              onChange={(event) => {
-                const form = event.currentTarget.form;
-                if (!form) {
-                  return;
-                }
-                const parsed = parseProviderMessage(event.target.value);
-                for (const key of ['username', 'password', 'server'] as const) {
-                  const input = form.elements.namedItem(key);
-                  if (input instanceof HTMLInputElement) {
-                    input.value = parsed[key] || '';
-                  }
-                }
-                setPlaylistUrl(parsed.playlist || '');
-                setMessageStatus(
-                  !event.target.value.trim()
-                    ? 'empty'
-                    : !parsed.username || !parsed.password
-                      ? 'missingCredentials'
-                      : parsed.server
-                        ? 'ready'
-                        : 'missingServer',
-                );
-                if (parsed.liveFormat) {
-                  setLiveFormat(parsed.liveFormat);
-                }
-              }}
-            />
-          </label>
-          {playlistUrl && (
-            <button
-              type="button"
-              className="text-left text-sm font-medium text-primary hover:underline"
-              onClick={() => setConnectionType('m3u')}
-            >
-              {translations('usePastedPlaylist')}
-            </button>
-          )}
-          {messageStatus === 'missingServer' && (
-            <p role="status" className="text-sm text-muted">
-              {translations('webPlayerNotServer')}
-            </p>
-          )}
-          {messageStatus === 'missingCredentials' && (
-            <p role="status" className="text-sm text-muted">
-              {translations('missingCredentials')}
-            </p>
-          )}
-          {messageStatus === 'ready' && (
-            <p role="status" className="text-sm text-primary">
-              {translations('messageRecognized')}
-            </p>
-          )}
-          <details ref={advancedRef} className="rounded-lg border border-border p-3 text-sm">
-            <summary className="cursor-pointer font-medium text-primary">
-              {translations('advancedOptions')}
-            </summary>
-            <div className="mt-4 grid gap-4">
-              <label className="grid gap-2">
-                {translations('username')}
-                <input name="username" autoComplete="off" className={inputClass} />
-              </label>
-              <label className="grid gap-2">
-                {translations('password')}
-                <input
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  className={inputClass}
-                />
-              </label>
-              <label className="grid gap-2">
-                {translations('optionalServer')}
-                <input
-                  name="server"
-                  type="url"
-                  placeholder="https://provider.example:8080"
-                  className={inputClass}
-                />
-              </label>
-              {savedServers.length > 0 && (
-                <label className="grid gap-2">
-                  {translations('savedServer')}
-                  <select name="serverId" className={inputClass}>
-                    <option value="">{translations('chooseServer')}</option>
-                    {savedServers.map((server) => (
-                      <option key={server.id} value={server.id}>
-                        {server.name} · {server.server}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              <label className="grid gap-2">
-                {translations('name')}
-                <input
-                  name="name"
-                  required
-                  maxLength={80}
-                  defaultValue={translations('defaultName')}
-                  className={inputClass}
-                />
-              </label>
-              <label className="grid gap-2">
-                {translations('liveFormat')}
-                <select
-                  value={liveFormat}
-                  onChange={(event) => setLiveFormat(event.target.value as 'm3u8' | 'ts')}
-                  className={inputClass}
-                >
-                  <option value="m3u8">HLS (.m3u8)</option>
-                  <option value="ts">MPEG-TS (.ts)</option>
-                </select>
-              </label>
-            </div>
-          </details>
-        </>
-      ) : connectionType === 'stalker' ? (
-        <>
-          <label className="grid gap-2 text-sm">
-            {translations('server')}
+          <label className="block space-y-1.5 text-sm font-medium">
+            {t('server')}
             <input
               name="server"
               type="url"
               required
-              placeholder="https://provider.example/portal.php"
-              className={inputClass}
+              value={server}
+              onChange={(event) => setServer(event.target.value)}
+              placeholder="https://provider.example:8080"
+              className={input}
             />
           </label>
-          <label className="grid gap-2 text-sm">
-            {translations('registeredMac')}
+          <label className="block space-y-1.5 text-sm font-medium">
+            {t('username')}
             <input
-              name="mac"
+              name="username"
               required
-              pattern="([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}"
-              placeholder="00:1A:79:XX:XX:XX"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
               autoComplete="off"
-              className={inputClass}
+              className={input}
             />
           </label>
-          <p className="text-sm text-muted">{translations('stalkerNote')}</p>
+          {editing ? (
+            <PasswordEditor providerId={editing.id} fieldClass={input} />
+          ) : (
+            <label className="block space-y-1.5 text-sm font-medium">
+              {t('password')}
+              <input
+                name="password"
+                type="password"
+                required
+                autoComplete="new-password"
+                className={input}
+              />
+            </label>
+          )}
+          <label className="block space-y-1.5 text-sm font-medium">
+            {t('liveFormat')}
+            <select
+              value={format}
+              onChange={(event) => setFormat(event.target.value as typeof format)}
+              className={input}
+            >
+              <option value="global">{t('useGlobalFormat')}</option>
+              <option value="auto">{t('automatic')}</option>
+              <option value="m3u8">HLS / M3U8</option>
+              <option value="ts">MPEG-TS / TS</option>
+            </select>
+          </label>
         </>
       ) : (
         <>
-          <label className="grid gap-2 text-sm">
-            {translations('playlist')}
-            <input
-              name="url"
-              type="url"
-              defaultValue={playlistUrl}
-              required={!playlistFile}
-              className={inputClass}
-            />
-          </label>
-          <label className="grid gap-2 text-sm">
-            {translations('file')}
-            <input
-              type="file"
-              accept=".m3u,.m3u8,text/plain"
-              className={inputClass}
-              onChange={(event) => setPlaylistFile(event.target.files?.[0] || null)}
-            />
-          </label>
+          {!editing?.local && (
+            <label className="block space-y-1.5 text-sm font-medium">
+              {t('playlist')}
+              <input
+                name="url"
+                type="url"
+                required={!file}
+                value={url}
+                onChange={(event) => setUrl(event.target.value)}
+                placeholder="https://provider.example/list.m3u"
+                className={input}
+              />
+            </label>
+          )}
+          {!editing && (
+            <label className="block space-y-1.5 text-sm font-medium">
+              {t('file')}
+              <input
+                type="file"
+                accept=".m3u,.m3u8,text/plain"
+                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                className={`${input} py-2`}
+              />
+            </label>
+          )}
+          {!editing && (
+            <details className="text-sm text-muted">
+              <summary className="cursor-pointer text-primary">{t('advancedOptions')}</summary>
+              <label className="mt-2 block space-y-1.5">
+                {t('epgUrl')}
+                <input
+                  type="url"
+                  value={epgUrl}
+                  onChange={(event) => setEpgUrl(event.target.value)}
+                  placeholder="https://provider.example/guide.xml"
+                  className={input}
+                />
+              </label>
+            </details>
+          )}
+          {editing?.local && <p className="text-sm text-muted">{t('localFileRequired')}</p>}
         </>
       )}
-
-      <details className="text-sm">
-        <summary className="cursor-pointer text-primary">{translations('otherMethods')}</summary>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {(['quick', 'xtream', 'm3u', 'stalker'] as const).map((option) => (
-            <button
-              type="button"
-              key={option}
-              aria-pressed={connectionType === option}
-              onClick={() => {
-                setConnectionType(option);
-                setFeedback('');
-              }}
-              className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${connectionType === option ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-primary/50 hover:text-foreground'}`}
-            >
-              {option === 'quick'
-                ? translations('quickCredentials')
-                : option === 'xtream'
-                  ? 'Xtream Codes'
-                  : option === 'm3u'
-                    ? 'Lista M3U'
-                    : 'Stalker / MAG'}
-            </button>
-          ))}
-        </div>
-      </details>
-
-      {connectionType === 'm3u' && <p className="text-sm text-muted">{translations('limit')}</p>}
       {feedback && (
-        <p role="status" className="text-sm text-primary">
-          {feedback}
-        </p>
+        <div
+          role={feedback.status === 'error' ? 'alert' : 'status'}
+          className={`flex items-start gap-2 rounded-lg px-3 py-2 text-sm ${feedback.status === 'success' ? 'bg-emerald-500/10 text-success' : 'bg-red-500/10 text-error'}`}
+        >
+          {feedback.status === 'success' ? (
+            <CircleCheck size={18} className="mt-0.5 shrink-0" />
+          ) : (
+            <CircleAlert size={18} className="mt-0.5 shrink-0" />
+          )}
+          <span>
+            <span className="block font-semibold">{feedback.message}</span>
+            {feedback.detail && <span className="block text-foreground/80">{feedback.detail}</span>}
+          </span>
+        </div>
       )}
-      <div className="flex flex-wrap gap-3">
-        <Button type="submit" disabled={isBusy}>
-          {isBusy ? translations('importing') : translations('save')}
+      <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={!!busy || !!editing?.local}
+          onClick={(event) => {
+            const form = event.currentTarget.form;
+            if (form?.reportValidity()) {
+              void submit(form, true);
+            }
+          }}
+        >
+          {busy === 'checking' ? <LoaderCircle size={16} className="animate-spin" /> : null}
+          {type === 'm3u' ? t('checkPlaylist') : t('check')}
         </Button>
-        {connectionType !== 'quick' && (
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={isBusy}
-            onClick={(event) => {
-              const form = event.currentTarget.form;
-              if (form?.reportValidity()) {
-                void submitConnection(form, true);
-              }
-            }}
-          >
-            {translations('check')}
+        {onCancel && (
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            {t('cancel')}
           </Button>
         )}
+        <Button type="submit" disabled={!!busy}>
+          {busy === 'saving' && <LoaderCircle size={16} className="animate-spin" />}
+          {editing ? t('saveChanges') : t('save')}
+        </Button>
       </div>
     </form>
   );
