@@ -20,14 +20,19 @@ export function MediaCard({
   returnTo?: string;
   kindLabel: string;
 }) {
-  const destination =
-    item.type === 'live' || item.type === 'episode'
-      ? `/watch/${item.type}/${encodeURIComponent(item.id)}`
-      : `/${item.type === 'movie' ? 'movies' : 'series'}/${encodeURIComponent(item.id)}`;
-  const href =
-    returnTo && item.type !== 'live' && item.type !== 'episode'
-      ? `${destination}?from=${encodeURIComponent(returnTo)}`
-      : destination;
+  const section = item.type === 'live' ? '/live' : item.type === 'movie' ? '/movies' : '/series';
+  const params = new URLSearchParams(returnTo?.split('?')[1] ?? '');
+  if (item.category) {
+    params.set('category', item.category);
+  }
+  params.set(
+    item.type === 'live' ? 'channel' : 'item',
+    item.type === 'episode' ? (item.parentId ?? item.id) : item.id,
+  );
+  if (!returnTo) {
+    params.delete('page');
+  }
+  const href = `${section}?${params}`;
   const Icon =
     item.type === 'live'
       ? Radio

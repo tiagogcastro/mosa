@@ -51,7 +51,7 @@ export default async function Home() {
           <div className="mt-6 flex gap-3">
             {featured ? (
               <Link
-                href={`/watch/${featured.item.type}/${encodeURIComponent(featured.item.id)}`}
+                href={`/${featured.item.type === 'movie' ? 'movies' : 'series'}?item=${encodeURIComponent(featured.item.type === 'episode' ? (featured.item.parentId ?? featured.item.id) : featured.item.id)}`}
                 className="rounded-lg bg-primary px-5 py-2.5 font-semibold text-background"
               >
                 {t('continue')}

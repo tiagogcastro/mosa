@@ -29,6 +29,7 @@
     "categorySearch": "Filtrar categorías",
     "sort": "Ordenar canales",
     "alphabetical": "Orden alfabético",
-    "searchHint": "Busca un canal, película o serie…"
+    "searchHint": "Busca un canal, película o serie…",
+    "closeSelection": "Cerrar detalles"
   }
 }

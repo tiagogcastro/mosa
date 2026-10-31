@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, desc, eq, like, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, like, lt, or, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { favorites, media, progress, providers } from '@/db/schema';
 import { activeProviderId } from '@/features/providers/active';
@@ -94,6 +94,33 @@ export function catalogCategories(type: string) {
     .orderBy(asc(media.category))
     .all()
     .filter((category): category is { name: string; count: number } => !!category.name);
+}
+export function catalogPageForItem(
+  item: typeof media.$inferSelect,
+  size: number,
+  sort: 'recent' | 'alpha',
+) {
+  const before =
+    sort === 'alpha'
+      ? sql`(${media.title} collate nocase < ${item.title} collate nocase or (${media.title} collate nocase = ${item.title} collate nocase and ${media.id} < ${item.id}))`
+      : or(
+          gt(media.addedAt, item.addedAt),
+          and(eq(media.addedAt, item.addedAt), lt(media.id, item.id)),
+        );
+  const count =
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(media)
+      .where(
+        and(
+          eq(media.providerId, item.providerId),
+          eq(media.type, item.type),
+          item.category ? eq(media.category, item.category) : undefined,
+          before,
+        ),
+      )
+      .get()?.count ?? 0;
+  return Math.floor(count / size) + 1;
 }
 export function globalSearch(query: string) {
   if (!query.trim()) {

@@ -160,11 +160,7 @@ export function GlobalSearch({ close }: { close: () => void }) {
                         data-search-result
                         key={item.id}
                         onClick={close}
-                        href={
-                          type === 'live'
-                            ? `/watch/live/${encodeURIComponent(item.id)}`
-                            : `/${type === 'movie' ? 'movies' : 'series'}/${encodeURIComponent(item.id)}`
-                        }
+                        href={`/${type === 'movie' ? 'movies' : type === 'series' ? 'series' : 'live'}?${type === 'live' ? 'channel' : 'item'}=${encodeURIComponent(item.id)}`}
                         className="flex items-center gap-3 rounded-lg p-2 hover:bg-elevated focus:bg-elevated"
                       >
                         <span className="h-12 w-12 shrink-0 overflow-hidden rounded bg-elevated">
