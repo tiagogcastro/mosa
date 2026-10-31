@@ -10,7 +10,7 @@
     "playNow": "Reproduzir agora",
     "cancelNext": "Cancelar",
     "fullscreen": "Tela cheia",
-    "pip": "Janela flutuante",
+    "pip": "Mini player",
     "mute": "Silenciar",
     "unmute": "Ativar som",
     "pause": "Pausar",
@@ -33,6 +33,11 @@
     "manifestDetail": "O manifesto da transmissão não pôde ser carregado ou interpretado; confirme o link e o formato na fonte.",
     "decodeDetail": "O navegador não conseguiu decodificar a mídia recebida; codec ou dados corrompidos são possibilidades.",
     "unknownDetail": "A causa exata não foi identificada. Verifique a fonte, a rede e a compatibilidade do navegador.",
-    "expandPlayer": "Abrir player"
+    "expandPlayer": "Expandir vídeo",
+    "movePlayer": "Mover janela (arraste ou use as setas)",
+    "resizePlayer": "Redimensionar janela (arraste ou use as setas)",
+    "externalPip": "Sobrepor em outras aplicações",
+    "closeExternalPip": "Fechar janela externa",
+    "externalUnavailable": "Janela externa indisponível neste navegador ou para esta transmissão."
   }
 }

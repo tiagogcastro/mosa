@@ -10,7 +10,7 @@
     "playNow": "Reproducir ahora",
     "cancelNext": "Cancelar",
     "fullscreen": "Pantalla completa",
-    "pip": "Ventana flotante",
+    "pip": "Minirreproductor",
     "mute": "Silenciar",
     "unmute": "Activar sonido",
     "pause": "Pausar",
@@ -33,6 +33,11 @@
     "manifestDetail": "No se pudo cargar o interpretar el manifiesto. Comprueba el enlace y el formato.",
     "decodeDetail": "El navegador no pudo decodificar el medio recibido; puede ser el códec o datos dañados.",
     "unknownDetail": "Se desconoce la causa exacta. Comprueba la fuente, red y compatibilidad del navegador.",
-    "expandPlayer": "Abrir reproductor"
+    "expandPlayer": "Ampliar video",
+    "movePlayer": "Mover ventana (arrastra o usa las flechas)",
+    "resizePlayer": "Redimensionar ventana (arrastra o usa las flechas)",
+    "externalPip": "Superponer en otras aplicaciones",
+    "closeExternalPip": "Cerrar ventana externa",
+    "externalUnavailable": "La ventana externa no está disponible en este navegador o para esta transmisión."
   }
 }

@@ -30,6 +30,7 @@ export function Player({
   preferredSpeed = 1,
   onFloatingChange,
   onFloat,
+  floating = false,
 }: {
   id: string;
   title: string;
@@ -42,6 +43,7 @@ export function Player({
   preferredSpeed?: number;
   onFloatingChange?: (value: boolean) => void;
   onFloat?: () => void;
+  floating?: boolean;
 }) {
   const frame = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -61,7 +63,26 @@ export function Player({
   const [qualities, setQualities] = useState<{ id: number; height: number }[]>([]);
   const [audioTracks, setAudioTracks] = useState<{ id: number; language: string }[]>([]);
   const [textTracks, setTextTracks] = useState<{ id: number; language: string }[]>([]);
-  const [pipSupported, setPipSupported] = useState(false);
+  const [nativePipAvailable, setNativePipAvailable] = useState(false);
+  const [nativePipActive, setNativePipActive] = useState(false);
+  const [nativePipError, setNativePipError] = useState('');
+  useEffect(() => {
+    const element = video.current;
+    if (!element) {
+      return;
+    }
+    const entered = () => {
+      setNativePipActive(true);
+      setNativePipError('');
+    };
+    const left = () => setNativePipActive(false);
+    element.addEventListener('enterpictureinpicture', entered);
+    element.addEventListener('leavepictureinpicture', left);
+    return () => {
+      element.removeEventListener('enterpictureinpicture', entered);
+      element.removeEventListener('leavepictureinpicture', left);
+    };
+  }, []);
   const saveProgress = useCallback(async () => {
     if (!video.current || !played.current) {
       return;
@@ -162,7 +183,7 @@ export function Player({
           element.currentTime = position;
         }
         element.playbackRate = type === 'live' ? 1 : preferredSpeed;
-        setPipSupported(document.pictureInPictureEnabled && !element.disablePictureInPicture);
+        setNativePipAvailable(document.pictureInPictureEnabled && !element.disablePictureInPicture);
         if (!disposed) {
           try {
             await element.play();
@@ -227,34 +248,15 @@ export function Player({
   return (
     <div
       ref={frame}
-      className={`flex flex-col bg-background ${compact ? '' : 'min-h-screen'} [\&:fullscreen]:h-screen [\&:fullscreen]:justify-between`}
+      className={`flex h-full min-h-0 flex-col bg-background ${compact ? '' : 'min-h-screen'} [\&:fullscreen]:h-screen [\&:fullscreen]:justify-between`}
     >
-      <div className="flex h-16 items-center gap-4 px-4 md:px-8">
-        <button
-          onClick={() => {
-            void saveProgress();
-            if (onClose) {
-              onClose();
-            } else {
-              router.back();
-            }
-          }}
-          className={control}
-          aria-label={t('back')}
-        >
-          <ArrowLeft />
-        </button>
-        <h1 className="min-w-0 break-words font-heading font-semibold [overflow-wrap:anywhere]">
-          {title}
-        </h1>
-      </div>
       <div
-        className={`relative flex items-center justify-center bg-black ${compact ? 'aspect-video' : 'flex-1'}`}
+        className={`relative flex min-h-0 items-center justify-center bg-black ${floating ? 'flex-1' : compact ? 'aspect-video' : 'flex-1'}`}
       >
         <video
           ref={video}
           playsInline
-          className="max-h-[75vh] w-full"
+          className="h-full max-h-[75vh] w-full"
           onPlay={() => {
             setPlaying(true);
           }}
@@ -332,7 +334,28 @@ export function Player({
           </div>
         )}
       </div>
-      <div className="mx-auto w-full max-w-5xl px-4 py-4">
+      {!floating && (
+        <div className="order-first flex h-16 items-center gap-4 px-4 md:px-8">
+          <button
+            onClick={() => {
+              void saveProgress();
+              if (onClose) {
+                onClose();
+              } else {
+                router.back();
+              }
+            }}
+            className={control}
+            aria-label={t('back')}
+          >
+            <ArrowLeft />
+          </button>
+          <h1 className="min-w-0 break-words font-heading font-semibold [overflow-wrap:anywhere]">
+            {title}
+          </h1>
+        </div>
+      )}
+      <div className={`mx-auto w-full max-w-5xl ${floating ? 'px-2 py-1' : 'px-4 py-4'}`}>
         {type !== 'live' && (
           <input
             type="range"
@@ -421,6 +444,32 @@ export function Player({
           <span className="ml-auto whitespace-nowrap text-sm tabular-nums text-muted">
             {type === 'live' ? 'LIVE' : `${time(current)} / ${time(duration)}`}
           </span>
+          {floating && (
+            <button
+              className={`${control} disabled:cursor-not-allowed disabled:opacity-40`}
+              disabled={!nativePipAvailable}
+              aria-label={t(nativePipActive ? 'closeExternalPip' : 'externalPip')}
+              title={t(
+                nativePipAvailable
+                  ? nativePipActive
+                    ? 'closeExternalPip'
+                    : 'externalPip'
+                  : 'externalUnavailable',
+              )}
+              aria-pressed={nativePipActive}
+              onClick={() => {
+                if (!video.current) {
+                  return;
+                }
+                const request = nativePipActive
+                  ? document.exitPictureInPicture()
+                  : video.current.requestPictureInPicture();
+                void request.catch(() => setNativePipError(t('externalUnavailable')));
+              }}
+            >
+              <PictureInPicture2 size={19} />
+            </button>
+          )}
           <button
             className={control}
             aria-label={t('fullscreen')}
@@ -429,7 +478,14 @@ export function Player({
             <Maximize />
           </button>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted">
+        {floating && nativePipError && (
+          <p role="status" className="text-xs text-error">
+            {nativePipError}
+          </p>
+        )}
+        <div
+          className={`${floating ? 'hidden' : 'mt-2 flex flex-wrap items-center gap-3 text-xs text-muted'}`}
+        >
           {qualities.length > 1 && (
             <label className="flex items-center gap-2">
               {t('quality')}
@@ -528,7 +584,7 @@ export function Player({
               </select>
             </label>
           )}
-          {compact && onFloatingChange && (
+          {compact && !floating && onFloatingChange && (
             <button
               className={control}
               aria-label={t('expandPlayer')}
@@ -537,7 +593,7 @@ export function Player({
               <Minimize2 size={18} /> {t('expandPlayer')}
             </button>
           )}
-          {(pipSupported || onFloat) && (
+          {(onFloatingChange || onFloat) && !floating && (
             <button
               className="flex items-center gap-1 rounded bg-elevated px-2 py-1"
               onClick={() => {
@@ -545,12 +601,7 @@ export function Player({
                   onFloat();
                   return;
                 }
-                if (video.current) {
-                  void video.current
-                    .requestPictureInPicture()
-                    .then(() => onFloatingChange?.(true))
-                    .catch(() => setPipSupported(false));
-                }
+                onFloatingChange?.(true);
               }}
             >
               <PictureInPicture2 size={16} />

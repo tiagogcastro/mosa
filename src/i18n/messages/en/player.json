@@ -10,7 +10,7 @@
     "playNow": "Play now",
     "cancelNext": "Cancel",
     "fullscreen": "Fullscreen",
-    "pip": "Floating window",
+    "pip": "Mini player",
     "mute": "Mute",
     "unmute": "Unmute",
     "pause": "Pause",
@@ -33,6 +33,11 @@
     "manifestDetail": "The stream manifest could not be loaded or parsed. Check the link and format with the source.",
     "decodeDetail": "The browser could not decode the received media; codec or corrupt data may be involved.",
     "unknownDetail": "The exact cause is unknown. Check the source, network and browser compatibility.",
-    "expandPlayer": "Open player"
+    "expandPlayer": "Expand video",
+    "movePlayer": "Move window (drag or use arrow keys)",
+    "resizePlayer": "Resize window (drag or use arrow keys)",
+    "externalPip": "Float over other applications",
+    "closeExternalPip": "Close external window",
+    "externalUnavailable": "External window is unavailable in this browser or for this stream."
   }
 }
