@@ -9,8 +9,10 @@ import { FavoriteButton } from '@/components/media/favorite-button';
 import { Player } from '@/features/playback/components/player';
 import { usePersistentPlayer } from '@/features/playback/persistent-player';
 import { categoryPresentation } from '@/features/live/category';
+import { Tooltip } from '@/components/ui/tooltip';
 
 type Channel = { id: string; title: string; artwork: string | null; favorite: boolean };
+type Program = { title: string; description: string; start: number; end: number };
 export function LiveTv({
   channels,
   initialChannel,
@@ -40,6 +42,24 @@ export function LiveTv({
   const [previous, setPrevious] = useState<Channel | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [showCategories, setShowCategories] = useState(false);
+  const [epg, setEpg] = useState<{ id: string; programs: Program[]; fetchedAt: number } | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!selected) {
+      return;
+    }
+    const controller = new AbortController();
+    void fetch(`/api/epg?id=${encodeURIComponent(selected.id)}`, { signal: controller.signal })
+      .then((response) => response.json())
+      .then((result: { programs?: Program[] }) => {
+        if (!controller.signal.aborted) {
+          setEpg({ id: selected.id, programs: result.programs ?? [], fetchedAt: Date.now() });
+        }
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [selected]);
   const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     listRef.current?.scrollTo({ top: 0 });
@@ -67,6 +87,12 @@ export function LiveTv({
       setSelected(channel);
     }
   }
+  function preservePlayback() {
+    if (selected && !floating && !suppressInline) {
+      openFloating({ id: selected.id, title: selected.title, type: 'live' });
+      setSuppressInline(true);
+    }
+  }
   function href(targetCategory: string, targetPage = 1) {
     const params = new URLSearchParams();
     if (targetCategory) {
@@ -90,7 +116,7 @@ export function LiveTv({
         <h1 className="font-heading text-3xl font-semibold">{t('live')}</h1>
         <p className="mt-1 text-sm text-muted">{t('importedCount', { count: total })}</p>
       </div>
-      <div className="grid min-h-0 min-w-0 flex-1 gap-5 lg:grid-cols-[180px_minmax(230px,310px)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[200px_320px_minmax(0,1fr)] 2xl:grid-cols-[220px_360px_minmax(0,1fr)]">
+      <div className="grid min-h-0 min-w-0 flex-1 gap-4 lg:grid-cols-[minmax(210px,25%)_minmax(270px,33%)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(240px,26%)_minmax(310px,32%)_minmax(0,1fr)]">
         <nav
           aria-label={t('allCategories')}
           className={`${showCategories ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-col overflow-hidden lg:flex`}
@@ -115,20 +141,25 @@ export function LiveTv({
               const presentation = categoryPresentation(name);
               const Icon = name ? presentation.Icon : SlidersHorizontal;
               return (
-                <Link
-                  key={name}
-                  href={href(name)}
-                  onClick={() => setShowCategories(false)}
-                  aria-current={category === name ? 'page' : undefined}
-                  aria-label={`${name || t('allCategories')} · ${count}`}
-                  className={`relative flex h-10 items-center gap-2 rounded-lg px-3 text-sm ${category === name ? 'bg-elevated font-semibold text-primary before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-primary' : 'text-muted hover:bg-elevated hover:text-foreground'}`}
-                >
-                  <Icon size={17} className="shrink-0" />
-                  <span className="min-w-0 flex-1 truncate" title={name || t('allCategories')}>
-                    {name ? presentation.name : t('allCategories')}
-                  </span>
-                  <span className="text-xs tabular-nums opacity-70">{count}</span>
-                </Link>
+                <Tooltip key={name} label={name || t('allCategories')}>
+                  <Link
+                    key={name}
+                    href={href(name)}
+                    onClick={() => {
+                      preservePlayback();
+                      setShowCategories(false);
+                    }}
+                    aria-current={category === name ? 'page' : undefined}
+                    aria-label={`${name || t('allCategories')} · ${count}`}
+                    className={`relative flex min-h-11 items-center gap-2 rounded-lg px-3 text-[15px] ${category === name ? 'bg-elevated font-semibold text-primary before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-primary' : 'text-muted hover:bg-elevated hover:text-foreground'}`}
+                  >
+                    <Icon size={17} className="shrink-0" />
+                    <span className="min-w-0 flex-1 truncate">
+                      {name ? presentation.name : t('allCategories')}
+                    </span>
+                    <span className="text-xs tabular-nums opacity-70">{count}</span>
+                  </Link>
+                </Tooltip>
               );
             })}
           </div>
@@ -152,6 +183,7 @@ export function LiveTv({
             <form
               className="flex items-center gap-2 rounded-lg bg-surface px-3 focus-within:ring-1 focus-within:ring-primary"
               action=""
+              onSubmit={preservePlayback}
             >
               <input type="hidden" name="category" value={category} />
               <input type="hidden" name="sort" value={sort} />
@@ -173,7 +205,10 @@ export function LiveTv({
                   aria-label={t('sort')}
                   name="sort"
                   value={sort}
-                  onChange={(event) => event.currentTarget.form?.requestSubmit()}
+                  onChange={(event) => {
+                    preservePlayback();
+                    event.currentTarget.form?.requestSubmit();
+                  }}
                   className="min-w-0 max-w-40 rounded-md bg-surface px-2 py-1.5 text-foreground"
                 >
                   <option value="alpha">{t('alphabetical')}</option>
@@ -186,6 +221,7 @@ export function LiveTv({
               >
                 <Link
                   href={href(category, Math.max(1, page - 1))}
+                  onClick={preservePlayback}
                   aria-disabled={page <= 1}
                   tabIndex={page <= 1 ? -1 : 0}
                   className={page <= 1 ? 'pointer-events-none opacity-40' : 'text-primary'}
@@ -196,6 +232,7 @@ export function LiveTv({
                 <span>{t('pageOf', { page, total: totalPages })}</span>
                 <Link
                   href={href(category, Math.min(totalPages, page + 1))}
+                  onClick={preservePlayback}
                   aria-disabled={page >= totalPages}
                   tabIndex={page >= totalPages ? -1 : 0}
                   className={page >= totalPages ? 'pointer-events-none opacity-40' : 'text-primary'}
@@ -219,20 +256,22 @@ export function LiveTv({
                   data-channel-id={channel.id}
                   className={`flex min-w-0 items-center gap-1 rounded-lg pr-1 hover:bg-elevated ${selected?.id === channel.id ? 'bg-elevated text-primary' : ''}`}
                 >
-                  <button
-                    onClick={() => select(channel)}
-                    aria-pressed={selected?.id === channel.id}
-                    aria-label={channel.title}
-                    className="flex min-h-16 min-w-0 flex-1 items-center gap-3 p-2 text-left"
-                  >
-                    <span className="h-12 w-[68px] shrink-0 overflow-hidden rounded-md bg-surface">
-                      <MediaArtwork title={channel.title} artwork={channel.artwork} channel />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-[15px] font-medium">{name}</span>
-                      {resolution && <span className="text-xs text-muted">{resolution}</span>}
-                    </span>
-                  </button>
+                  <Tooltip label={channel.title}>
+                    <button
+                      onClick={() => select(channel)}
+                      aria-pressed={selected?.id === channel.id}
+                      aria-label={channel.title}
+                      className="flex min-h-16 min-w-0 flex-1 items-center gap-3 p-2 text-left"
+                    >
+                      <span className="h-12 w-[68px] shrink-0 overflow-hidden rounded-md bg-surface">
+                        <MediaArtwork title={channel.title} artwork={channel.artwork} channel />
+                      </span>
+                      <span className="min-w-0 flex-1 overflow-hidden">
+                        <span className="block truncate text-[15px] font-medium">{name}</span>
+                        {resolution && <span className="text-xs text-muted">{resolution}</span>}
+                      </span>
+                    </button>
+                  </Tooltip>
                   <FavoriteButton id={channel.id} initial={channel.favorite} />
                 </div>
               );
@@ -258,18 +297,71 @@ export function LiveTv({
                   setSuppressInline(true);
                 }}
               />
-              <div className="mt-3 flex min-h-16 flex-wrap items-center justify-between gap-2 px-5 pb-4 text-sm text-muted">
-                <span>{t('unverified')}</span>
-                {previous && (
+              {previous && (
+                <div className="flex justify-end px-5 pb-4 pt-3 text-sm">
                   <button className="text-primary hover:underline" onClick={() => select(previous)}>
                     ← {playerText('previous')}: {previous.title}
                   </button>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
+          ) : floating || (selected && suppressInline) ? (
+            <div className="rounded-xl border border-border bg-surface px-4 py-3 text-sm text-muted">
+              {selected && (
+                <span className="block font-medium text-foreground">{selected.title}</span>
+              )}
+              <span className="mt-1 block">{playerText('playingInMini')}</span>
             </div>
           ) : (
             <div className="flex aspect-video items-center justify-center rounded-xl bg-surface p-6 text-center text-muted">
-              {floating ? playerText('playingInMini') : t('selectChannel')}
+              {t('selectChannel')}
+            </div>
+          )}
+          {selected && epg?.id === selected.id && epg.programs.length > 0 && (
+            <div className="mt-3 rounded-xl border border-border bg-surface p-4">
+              <h2 className="mb-3 text-sm font-semibold text-primary">{t('programGuide')}</h2>
+              <div className="space-y-3">
+                {epg.programs.map((program, index) => {
+                  const now = epg.fetchedAt / 1000;
+                  const active = program.start <= now && program.end > now;
+                  const progress = Math.max(
+                    0,
+                    Math.min(100, ((now - program.start) / (program.end - program.start)) * 100),
+                  );
+                  return (
+                    <div key={`${program.start}-${index}`} className="rounded-lg bg-elevated p-3">
+                      <p className="text-xs tabular-nums text-muted">
+                        {new Date(program.start * 1000).toLocaleTimeString(undefined, {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                        –
+                        {new Date(program.end * 1000).toLocaleTimeString(undefined, {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}{' '}
+                        {active ? `· ${t('nowPlaying')}` : ''}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold">
+                        {program.title || t('untitledProgram')}
+                      </p>
+                      {program.description && (
+                        <p className="mt-1 line-clamp-2 text-xs text-muted">
+                          {program.description}
+                        </p>
+                      )}
+                      {active && (
+                        <div className="mt-2 h-1 overflow-hidden rounded-full bg-border">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </section>

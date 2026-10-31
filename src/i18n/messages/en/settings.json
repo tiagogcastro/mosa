@@ -35,6 +35,11 @@
     "dark": "Dark theme",
     "light": "Light theme",
     "restoreChannel": "Restore last channel when opening Live TV",
-    "qrNote": "This QR contains only this installation ID. It does not grant access or authenticate anyone; device pairing requires a reachable, protected server with temporary codes."
+    "qrNote": "This QR contains only this installation ID. It does not grant access or authenticate anyone; device pairing requires a reachable, protected server with temporary codes.",
+    "actions": "Source actions",
+    "passwordSafety": "The saved password remains protected and is not displayed. Leave blank to keep it.",
+    "remoteExplanation": "Want to use the same catalog on another device? A provider MAC cannot do that. Use the invitation QR below: both devices access this Mosa without copying playlists. An owner password and reachable HTTPS address are required; the server stays local by default.",
+    "aboutDetails": "Mosa organizes authorized sources and data on your local server. It does not provide subscriptions, streams, DRM, media relaying or transcoding. Availability, EPG and compatibility depend on your provider and browser.",
+    "copyright": "© 2026 Mosa. All rights reserved. Trademarks, artwork and videos belong to their respective owners."
   }
 }

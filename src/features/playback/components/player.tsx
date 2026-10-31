@@ -8,6 +8,7 @@ import { useRouter } from '@/i18n/navigation';
 import {
   ArrowLeft,
   Maximize,
+  Minimize,
   Pause,
   Play,
   RotateCcw,
@@ -18,7 +19,10 @@ import {
   VolumeX,
   PictureInPicture2,
   Radio,
+  SkipBack,
+  SkipForward,
 } from 'lucide-react';
+import { Tooltip } from '@/components/ui/tooltip';
 
 export function Player({
   id,
@@ -26,6 +30,7 @@ export function Player({
   type,
   position = 0,
   nextId,
+  previousId,
   compact = false,
   onClose,
   autoNext = false,
@@ -40,6 +45,7 @@ export function Player({
   type: string;
   position?: number;
   nextId?: string;
+  previousId?: string;
   compact?: boolean;
   onClose?: () => void;
   autoNext?: boolean;
@@ -61,6 +67,9 @@ export function Player({
   const [error, setError] = useState('');
   const [detail, setDetail] = useState('');
   const [playing, setPlaying] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimer = useRef<number | null>(null);
   const [muted, setMuted] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -68,6 +77,34 @@ export function Player({
   const [retry, setRetry] = useState(0);
   const [sourceAttempt, setSourceAttempt] = useState(0);
   const [volume, setVolume] = useState(1);
+  useEffect(() => {
+    const sync = () => {
+      setFullscreen(document.fullscreenElement === frame.current);
+      setShowControls(true);
+    };
+    document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, []);
+  useEffect(() => {
+    if (fullscreen) {
+      controlsTimer.current = window.setTimeout(() => setShowControls(false), 3000);
+    }
+    return () => {
+      if (controlsTimer.current) {
+        window.clearTimeout(controlsTimer.current);
+      }
+    };
+  }, [fullscreen]);
+  function revealControls() {
+    if (!fullscreen) {
+      return;
+    }
+    setShowControls(true);
+    if (controlsTimer.current) {
+      window.clearTimeout(controlsTimer.current);
+    }
+    controlsTimer.current = window.setTimeout(() => setShowControls(false), 3000);
+  }
   useEffect(() => {
     try {
       const stored = Number(window.localStorage.getItem('mosa-volume'));
@@ -324,23 +361,28 @@ export function Player({
     }
   }, [countdown, nextId, router]);
   function time(value: number) {
-    return Number.isFinite(value)
-      ? `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`
-      : '0:00';
+    if (!Number.isFinite(value) || value < 0) {
+      return '00:00:00';
+    }
+    const seconds = Math.floor(value);
+    return `${String(Math.floor(seconds / 3600)).padStart(2, '0')}:${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
   }
   const control = 'rounded-lg p-2 text-foreground hover:bg-elevated';
   return (
     <div
       ref={frame}
-      className={`flex h-full min-h-0 flex-col bg-background ${compact ? '' : 'min-h-screen'} [\&:fullscreen]:h-screen [\&:fullscreen]:justify-between`}
+      onPointerMove={revealControls}
+      onKeyDown={revealControls}
+      onFocusCapture={revealControls}
+      className={`relative flex h-full min-h-0 flex-col bg-background ${compact ? '' : 'min-h-screen'} ${fullscreen ? 'h-dvh! w-dvw! overflow-hidden' : ''}`}
     >
       <div
-        className={`relative flex min-h-0 items-center justify-center bg-black ${floating ? 'flex-1' : compact ? 'aspect-video' : 'flex-1'}`}
+        className={`flex min-h-0 items-center justify-center bg-black ${fullscreen ? 'absolute inset-0' : floating ? 'flex-1' : compact ? 'aspect-video' : 'flex-1'}`}
       >
         <video
           ref={setVideo}
           playsInline
-          className="h-full max-h-[75vh] w-full"
+          className={`h-full w-full object-contain ${fullscreen ? '' : 'max-h-[75vh]'}`}
           onPlay={() => {
             setPlaying(true);
           }}
@@ -430,7 +472,10 @@ export function Player({
         )}
       </div>
       {!floating && (
-        <div className="order-first flex h-16 items-center gap-4 px-4 md:px-8">
+        <div
+          hidden={fullscreen && !showControls}
+          className={`order-first flex h-16 items-center gap-4 px-4 md:px-8 ${fullscreen ? 'absolute inset-x-0 top-0 z-10 bg-black/75' : ''}`}
+        >
           <button
             onClick={() => {
               void saveProgress();
@@ -450,15 +495,23 @@ export function Player({
           </h1>
         </div>
       )}
-      <div className={`mx-auto w-full max-w-5xl ${floating ? 'px-2 py-1' : 'px-4 py-4'}`}>
+      <div
+        hidden={fullscreen && !showControls}
+        className={`mx-auto w-full max-w-5xl ${floating ? 'px-2 py-1' : 'px-4 py-4'} ${fullscreen ? 'absolute inset-x-0 bottom-0 z-10 max-w-none bg-black/80' : ''}`}
+      >
         {type !== 'live' && (
           <input
             type="range"
             aria-label={t('title')}
-            className="w-full accent-primary"
+            className="volume-range w-full"
             min="0"
             max={Number.isFinite(duration) && duration > 0 ? duration : 1}
             value={Math.min(current, duration || 1)}
+            style={
+              {
+                '--range-progress': `${duration > 0 && Number.isFinite(duration) ? (current / duration) * 100 : 0}%`,
+              } as React.CSSProperties
+            }
             onChange={(event) => {
               if (video.current) {
                 video.current.currentTime = Number(event.target.value);
@@ -482,6 +535,20 @@ export function Player({
           </button>
           {type !== 'live' && (
             <>
+              {type === 'episode' && previousId && (
+                <Tooltip label={t('previousEpisode')}>
+                  <button
+                    className={control}
+                    aria-label={t('previousEpisode')}
+                    onClick={() => {
+                      void saveProgress();
+                      router.push(`/watch/episode/${encodeURIComponent(previousId)}`);
+                    }}
+                  >
+                    <SkipBack />
+                  </button>
+                </Tooltip>
+              )}
               <button
                 className={control}
                 aria-label={t('rewind')}
@@ -504,6 +571,20 @@ export function Player({
               >
                 <RotateCw />
               </button>
+              {type === 'episode' && nextId && (
+                <Tooltip label={t('nextEpisode')}>
+                  <button
+                    className={control}
+                    aria-label={t('nextEpisode')}
+                    onClick={() => {
+                      void saveProgress();
+                      router.push(`/watch/episode/${encodeURIComponent(nextId)}`);
+                    }}
+                  >
+                    <SkipForward />
+                  </button>
+                </Tooltip>
+              )}
             </>
           )}
           <button
@@ -543,11 +624,7 @@ export function Player({
           />
           <span className="ml-auto whitespace-nowrap text-sm tabular-nums text-muted">
             {type === 'live' ? (
-              <span
-                className="inline-flex items-center gap-1.5 text-error"
-                title={t('live')}
-                aria-label={t('live')}
-              >
+              <span className="inline-flex items-center gap-1.5 text-error" aria-label={t('live')}>
                 <span className="h-2 w-2 rounded-full bg-error" />
                 <Radio size={17} />
               </span>
@@ -555,12 +632,58 @@ export function Player({
               `${time(current)} / ${time(duration)}`
             )}
           </span>
+          {type !== 'live' && (
+            <label className="flex items-center gap-1 text-xs text-muted">
+              {t('speed')}
+              <select
+                aria-label={t('speed')}
+                className="rounded bg-elevated px-1.5 py-1 text-foreground"
+                defaultValue={preferredSpeed}
+                onChange={(event) => {
+                  if (video.current) {
+                    video.current.playbackRate = Number(event.target.value);
+                  }
+                }}
+              >
+                {[0.75, 1, 1.25, 1.5, 2].map((value) => (
+                  <option key={value} value={value}>
+                    {value}×
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {(onFloatingChange || onFloat) && !floating && (
+            <button
+              type="button"
+              className={control}
+              aria-label={t('pip')}
+              onClick={() => {
+                if (document.fullscreenElement === frame.current) {
+                  void document.exitFullscreen();
+                }
+                if (onFloat) {
+                  onFloat();
+                } else {
+                  onFloatingChange?.(true);
+                }
+              }}
+            >
+              <PictureInPicture2 size={20} />
+            </button>
+          )}
           <button
             className={control}
-            aria-label={t('fullscreen')}
-            onClick={() => void frame.current?.requestFullscreen()}
+            aria-label={t(fullscreen ? 'exitFullscreen' : 'fullscreen')}
+            onClick={() => {
+              if (document.fullscreenElement === frame.current) {
+                void document.exitFullscreen();
+              } else {
+                void frame.current?.requestFullscreen();
+              }
+            }}
           >
-            <Maximize />
+            {fullscreen ? <Minimize /> : <Maximize />}
           </button>
         </div>
         <div
@@ -643,27 +766,6 @@ export function Player({
               </select>
             </label>
           )}
-          {type !== 'live' && (
-            <label className="flex items-center gap-2">
-              {t('speed')}
-              <select
-                aria-label={t('speed')}
-                className="rounded bg-elevated px-2 py-1"
-                defaultValue={preferredSpeed}
-                onChange={(event) => {
-                  if (video.current) {
-                    video.current.playbackRate = Number(event.target.value);
-                  }
-                }}
-              >
-                {[0.75, 1, 1.25, 1.5, 2].map((value) => (
-                  <option key={value} value={value}>
-                    {value}×
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
           {compact && !floating && onFloatingChange && (
             <button
               className={control}
@@ -671,21 +773,6 @@ export function Player({
               onClick={() => onFloatingChange(false)}
             >
               <Minimize2 size={18} /> {t('expandPlayer')}
-            </button>
-          )}
-          {(onFloatingChange || onFloat) && !floating && (
-            <button
-              className="flex items-center gap-1 rounded bg-elevated px-2 py-1"
-              onClick={() => {
-                if (onFloat) {
-                  onFloat();
-                  return;
-                }
-                onFloatingChange?.(true);
-              }}
-            >
-              <PictureInPicture2 size={16} />
-              {t('pip')}
             </button>
           )}
         </div>

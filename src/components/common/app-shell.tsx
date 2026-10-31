@@ -112,7 +112,7 @@ export function AppShell({
               <button
                 onClick={() => setSearchOpen(true)}
                 aria-label={common('search')}
-                className={itemClass(false)}
+                className={`${itemClass(false)} text-xs`}
               >
                 <Search size={20} strokeWidth={1.9} className="shrink-0" />
                 {!collapsed && <span>{common('search')}</span>}
@@ -151,7 +151,7 @@ export function AppShell({
           </div>
         </aside>
         <main
-          className={`mx-auto min-w-0 max-w-[1800px] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-7 md:px-8 md:pb-10 ${pathname === '/live' || pathname === '/settings' ? 'lg:h-dvh lg:overflow-hidden' : 'min-h-dvh'}`}
+          className={`mx-auto min-w-0 max-w-[1800px] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-7 md:px-8 md:pb-10 ${['/live', '/movies', '/series', '/settings'].includes(pathname) ? 'lg:h-dvh lg:overflow-hidden' : 'min-h-dvh'}`}
         >
           <div className="mb-6 flex items-center justify-between md:hidden">
             <Link href="/" aria-label="Mosa" className="flex items-center gap-2">

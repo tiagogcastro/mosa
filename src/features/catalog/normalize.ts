@@ -23,18 +23,7 @@ export function normalizeTitle(raw: string) {
   return clean || raw.trim();
 }
 export function normalizeCategory(raw: string) {
-  const name = raw
-    .replace(/^(?:BR|PT|ES|EN)\s*[|:-]\s*/i, '')
-    .replace(/\b(?:HD|FHD|4K)\b/gi, '')
-    .trim();
-  if (/sport|esporte/i.test(name)) {
-    return 'Sports';
-  }
-  if (/news|notícia|noticia|jornal/i.test(name)) {
-    return 'News';
-  }
-  if (/kids|infantil|niños/i.test(name)) {
-    return 'Kids';
-  }
-  return name || 'Other';
+  // Category names belong to the provider. Keep genres, brands, regions and
+  // quality variants distinct instead of collapsing them into generic labels.
+  return raw.replace(/[\u0000-\u001f]/g, ' ').trim() || 'Other';
 }

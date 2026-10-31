@@ -14,11 +14,13 @@ export async function MediaSection({
   items,
   returnTo,
   rail = false,
+  selectedId,
 }: {
   title: string;
   items: Row[];
   returnTo?: string;
   rail?: boolean;
+  selectedId?: string;
 }) {
   if (!items.length) {
     return null;
@@ -60,12 +62,13 @@ export async function MediaSection({
                 position={position}
                 duration={duration}
                 returnTo={returnTo}
+                selected={item.id === selectedId}
               />
             </div>
           ))}
         </MediaRail>
       ) : (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {items.map(({ item, favorite, position, duration }) => (
             <div key={item.id} className="min-w-0">
               <MediaCard
@@ -81,6 +84,7 @@ export async function MediaSection({
                 position={position}
                 duration={duration}
                 returnTo={returnTo}
+                selected={item.id === selectedId}
               />
             </div>
           ))}

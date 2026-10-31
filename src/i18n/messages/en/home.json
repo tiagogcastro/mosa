@@ -8,6 +8,12 @@
     "discover": "Discover on Mosa",
     "recentlyAdded": "Added to catalog",
     "noProvider": "Ready when you are",
-    "noProviderText": "Mosa organizes the sources you choose. Your data stays on your device."
+    "noProviderText": "Mosa organizes the sources you choose. Your data stays on your device.",
+    "libraryIntro": "Your watch history and favorites, organized separately.",
+    "favoritesCount": "{count} saved items",
+    "watching": "Pick up where you left off",
+    "watchingDescription": "Videos in progress and recently visited channels.",
+    "favoritesDescription": "Items you saved to find again.",
+    "noFavorites": "You have not saved any favorites yet."
   }
 }

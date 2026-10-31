@@ -133,25 +133,43 @@ export function ConnectionForm({ onSuccess }: { onSuccess?: () => void } = {}) {
         }}
         className="grid gap-5 rounded-xl border border-border bg-surface p-6"
       >
-        <label className="grid gap-2 text-sm">
-          {translations('type')}
-          <select
-            className={inputClass}
-            value={connectionType}
-            onChange={(event) =>
-              setConnectionType(event.target.value as 'xtream' | 'm3u' | 'stalker' | 'quick')
-            }
-          >
-            <option value="quick">{translations('quickCredentials')}</option>
-            <option value="xtream">Xtream Codes</option>
-            <option value="m3u">M3U</option>
-            <option value="stalker">Stalker / MAG</option>
-          </select>
-          <span className="text-xs text-muted">{translations(`${connectionType}Guide`)}</span>
-        </label>
+        <fieldset className="grid gap-3">
+          <legend className="mb-3 text-sm font-semibold">{translations('type')}</legend>
+          <div className="grid grid-cols-2 gap-2">
+            {(['quick', 'xtream', 'm3u', 'stalker'] as const).map((option) => (
+              <button
+                type="button"
+                key={option}
+                aria-pressed={connectionType === option}
+                onClick={() => {
+                  setConnectionType(option);
+                  setFeedback('');
+                }}
+                className={`min-h-16 rounded-lg border p-3 text-left text-sm font-semibold transition-colors ${connectionType === option ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-primary/50 hover:text-foreground'}`}
+              >
+                {option === 'quick'
+                  ? translations('quickCredentials')
+                  : option === 'xtream'
+                    ? 'Xtream Codes'
+                    : option === 'm3u'
+                      ? 'Lista M3U'
+                      : 'Stalker / MAG'}
+              </button>
+            ))}
+          </div>
+          <p className="rounded-lg bg-elevated p-3 text-xs leading-relaxed text-muted">
+            {translations(`${connectionType}Guide`)}
+          </p>
+        </fieldset>
         <label className="grid gap-2 text-sm">
           {translations('name')}
-          <input name="name" required maxLength={80} className={inputClass} />
+          <input
+            name="name"
+            required
+            maxLength={80}
+            defaultValue={translations('defaultName')}
+            className={inputClass}
+          />
         </label>
 
         {connectionType === 'xtream' ? (

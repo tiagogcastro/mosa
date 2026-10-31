@@ -35,6 +35,11 @@
     "dark": "Tema oscuro",
     "light": "Tema claro",
     "restoreChannel": "Restaurar el último canal al abrir TV",
-    "qrNote": "Este QR contiene solo el ID de esta instalación. No concede acceso ni autentica a nadie; vincular dispositivos requiere un servidor accesible y protegido con códigos temporales."
+    "qrNote": "Este QR contiene solo el ID de esta instalación. No concede acceso ni autentica a nadie; vincular dispositivos requiere un servidor accesible y protegido con códigos temporales.",
+    "actions": "Acciones de la fuente",
+    "passwordSafety": "La contraseña guardada permanece protegida y no se muestra. Déjala vacía para conservarla.",
+    "remoteExplanation": "¿Quieres usar el mismo catálogo en otro dispositivo? El MAC del proveedor no sirve para eso. Usa el QR de invitación: ambos dispositivos acceden a este Mosa sin copiar listas. Hace falta contraseña del propietario y una dirección HTTPS accesible; por defecto el servidor sigue siendo local.",
+    "aboutDetails": "Mosa organiza fuentes autorizadas y datos en tu servidor local. No proporciona suscripciones, transmisiones, DRM, retransmisión ni transcodificación. Disponibilidad, EPG y compatibilidad dependen del proveedor y del navegador.",
+    "copyright": "© 2026 Mosa. Todos los derechos reservados. Las marcas, imágenes y vídeos pertenecen a sus respectivos titulares."
   }
 }

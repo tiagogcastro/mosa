@@ -44,6 +44,7 @@
     "largePlaylist": "The playlist exceeds 8 MB. If you have a DNS, username and password, use message credentials (Xtream) instead of importing this large list.",
     "connectedCount": "Valid playlist: {count} entries found.",
     "importNote": "Check tests your credentials; Save also imports the catalog. Playback depends on the link, browser and provider permissions.",
-    "liveFormat": "Live channel format (use TS if the message says output=ts)"
+    "liveFormat": "Live channel format (use TS if the message says output=ts)",
+    "defaultName": "My source"
   }
 }

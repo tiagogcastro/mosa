@@ -5,6 +5,9 @@ import { loadSeriesEpisodes } from '@/features/providers/service';
 import { MediaArtwork } from '@/components/media/media-artwork';
 import { Link } from '@/i18n/navigation';
 import { FavoriteButton } from '@/components/media/favorite-button';
+import { db } from '@/db/client';
+import { media, progress } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 export async function DetailPage({
   id,
@@ -21,7 +24,6 @@ export async function DetailPage({
   if (!result || result.item.type !== type) {
     notFound();
   }
-  const { item } = result;
   const t = await getTranslations('Catalog');
   let episodeError = false;
   let episodes: Awaited<ReturnType<typeof loadSeriesEpisodes>> = [];
@@ -32,7 +34,32 @@ export async function DetailPage({
       episodeError = true;
     }
   }
+  const item = type === 'series' ? (mediaById(id)?.item ?? result.item) : result.item;
   episodes.sort((a, b) => (a.season || 0) - (b.season || 0) || (a.episode || 0) - (b.episode || 0));
+  const episodeProgress =
+    type === 'series'
+      ? new Map(
+          db
+            .select({
+              id: media.id,
+              position: progress.position,
+              duration: progress.duration,
+              completed: progress.completed,
+            })
+            .from(media)
+            .innerJoin(progress, eq(progress.mediaId, media.id))
+            .where(eq(media.parentId, id))
+            .all()
+            .map((row) => [row.id, row]),
+        )
+      : new Map();
+  const resumeEpisode =
+    episodes.find((episode) => {
+      const watched = episodeProgress.get(episode.id);
+      return watched?.position && !watched.completed;
+    }) ??
+    episodes.find((episode) => !episodeProgress.get(episode.id)?.completed) ??
+    episodes[0];
   return (
     <>
       {!compact && (
@@ -71,16 +98,15 @@ export async function DetailPage({
               {item.description}
             </p>
           )}
-          <p className="mt-3 text-sm text-muted">
-            {t('provider')}: {result.provider}
-          </p>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             {type === 'movie' || episodes.length ? (
               <Link
-                href={`/watch/${type === 'movie' ? 'movie' : 'episode'}/${encodeURIComponent(type === 'movie' ? id : episodes[0].id)}`}
+                href={`/watch/${type === 'movie' ? 'movie' : 'episode'}/${encodeURIComponent(type === 'movie' ? id : resumeEpisode.id)}`}
                 className="rounded-lg bg-primary px-6 py-3 font-semibold text-background"
               >
-                {result.position ? t('continue') : t('watch')}
+                {result.position || (type === 'series' && episodeProgress.size)
+                  ? t('continue')
+                  : t('watch')}
               </Link>
             ) : null}
             <FavoriteButton id={id} initial={!!result.favorite} />
@@ -93,23 +119,61 @@ export async function DetailPage({
       {episodes.length > 0 && (
         <section className="mt-8">
           <h2 className="mb-5 text-xl font-semibold">{t('episodes')}</h2>
-          <div className="grid gap-3">
-            {episodes.map((episode) => (
-              <Link
-                href={`/watch/episode/${encodeURIComponent(episode.id)}`}
-                key={episode.id}
-                className="flex items-center gap-4 rounded-lg border border-border bg-surface p-4 hover:border-primary"
-              >
-                <span className="flex h-12 w-16 items-center justify-center rounded bg-elevated text-primary">
-                  {episode.episode}
-                </span>
-                <span className="font-semibold">{episode.title}</span>
-                <span className="ml-auto text-sm text-muted">
-                  {t('season')} {episode.season}
-                </span>
-              </Link>
-            ))}
-          </div>
+          {[...new Set(episodes.map((episode) => episode.season ?? 1))].map((season) => (
+            <div key={season} className="mb-6">
+              <h3 className="mb-3 rounded-lg border-l-2 border-primary bg-elevated px-3 py-2 font-semibold">
+                {t('season')} {season}
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {episodes
+                  .filter((episode) => (episode.season ?? 1) === season)
+                  .map((episode) => {
+                    const watched = episodeProgress.get(episode.id);
+                    const percent = watched?.duration
+                      ? Math.round(Math.min(100, (watched.position / watched.duration) * 100))
+                      : 0;
+                    return (
+                      <Link
+                        href={`/watch/episode/${encodeURIComponent(episode.id)}`}
+                        key={episode.id}
+                        className="group overflow-hidden rounded-lg border border-border bg-surface hover:border-primary"
+                      >
+                        <span className="block aspect-video overflow-hidden bg-elevated">
+                          <MediaArtwork
+                            title={episode.title}
+                            artwork={episode.artwork || item.artwork}
+                          />
+                        </span>
+                        <span className="block p-3">
+                          <span className="text-xs text-primary">
+                            {t('episodes')} {episode.episode}
+                          </span>
+                          <span className="mt-1 block line-clamp-2 font-semibold group-hover:text-primary">
+                            {episode.title}
+                          </span>
+                          {episode.description && (
+                            <span className="mt-1 block line-clamp-2 text-xs text-muted">
+                              {episode.description}
+                            </span>
+                          )}
+                          {percent > 0 && (
+                            <span className="mt-2 block text-xs text-muted">
+                              {t('episodeProgress', { percent })}
+                              <span className="mt-1 block h-1 overflow-hidden rounded-full bg-border">
+                                <span
+                                  className="block h-full rounded-full bg-primary"
+                                  style={{ width: `${percent}%` }}
+                                />
+                              </span>
+                            </span>
+                          )}
+                        </span>
+                      </Link>
+                    );
+                  })}
+              </div>
+            </div>
+          ))}
         </section>
       )}
     </>

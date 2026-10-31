@@ -42,6 +42,9 @@
     "live": "Live",
     "playingInMini": "Playing in the mini player. Select a channel to switch.",
     "accessDetail": "The server rejected this stream (HTTP 401/403). Check that the trial is still active and your provider allows playback on this device.",
-    "missingDetail": "The stream is no longer available at this address (HTTP 404). Refresh the catalog or contact the provider."
+    "missingDetail": "The stream is no longer available at this address (HTTP 404). Refresh the catalog or contact the provider.",
+    "exitFullscreen": "Exit fullscreen",
+    "previousEpisode": "Previous episode",
+    "nextEpisode": "Next episode"
   }
 }

@@ -264,15 +264,30 @@ export async function loadSeriesEpisodes(seriesId: string) {
   }
   const provider = db.select().from(providers).where(eq(providers.id, series.providerId)).get();
   const existing = db.select().from(media).where(eq(media.parentId, seriesId)).all();
-  if (!provider?.enabled || provider.type !== 'xtream' || existing.length) {
+  if (!provider?.enabled || provider.type !== 'xtream' || (existing.length && series.description)) {
     return existing;
   }
-  const items = await xtreamEpisodes(
-    decrypt<XtreamConfig>(provider.encryptedConfig),
-    series.externalId,
-  );
+  let details: Awaited<ReturnType<typeof xtreamEpisodes>>;
+  try {
+    details = await xtreamEpisodes(
+      decrypt<XtreamConfig>(provider.encryptedConfig),
+      series.externalId,
+    );
+  } catch (error) {
+    if (existing.length) {
+      return existing;
+    }
+    throw error;
+  }
   db.transaction((tx) => {
-    for (const item of items) {
+    tx.update(media)
+      .set({
+        description: details.description || series.description,
+        artwork: details.artwork || series.artwork,
+      })
+      .where(eq(media.id, seriesId))
+      .run();
+    for (const item of details.episodes) {
       tx.insert(media)
         .values({
           id: `${series.providerId}:episode:${item.externalId}`,

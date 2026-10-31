@@ -7,6 +7,7 @@ import { Inter, Outfit } from 'next/font/google';
 import '@/app/globals.css';
 import { preference } from '@/features/settings/preferences';
 import { PersistentPlayer } from '@/features/playback/persistent-player';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const bodyFont = Inter({ variable: '--font-body', subsets: ['latin'] });
 const headingFont = Outfit({ variable: '--font-heading', subsets: ['latin'] });
@@ -37,7 +38,9 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
     >
       <body>
         <NextIntlClientProvider>
-          <PersistentPlayer>{children}</PersistentPlayer>
+          <TooltipProvider>
+            <PersistentPlayer>{children}</PersistentPlayer>
+          </TooltipProvider>
         </NextIntlClientProvider>
       </body>
     </html>

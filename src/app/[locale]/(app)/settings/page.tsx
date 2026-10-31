@@ -8,6 +8,7 @@ import { preference, deviceId } from '@/features/settings/preferences';
 import { authEnabled, publicOrigin } from '@/features/auth/service';
 import { decrypt } from '@/lib/security/crypto';
 import type { XtreamConfig } from '@/features/providers/adapters/xtream';
+import type { StalkerConfig } from '@/features/providers/adapters/stalker';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +33,24 @@ export default async function SettingsPage() {
         connections={connections.map((connection) => ({
           ...connection,
           syncedAt: connection.syncedAt?.toISOString() ?? null,
+          server:
+            connection.type === 'xtream'
+              ? decrypt<XtreamConfig>(connection.encryptedConfig).server
+              : connection.type === 'stalker'
+                ? decrypt<StalkerConfig>(connection.encryptedConfig).server
+                : undefined,
+          username:
+            connection.type === 'xtream'
+              ? decrypt<XtreamConfig>(connection.encryptedConfig).username
+              : undefined,
+          mac:
+            connection.type === 'stalker'
+              ? decrypt<StalkerConfig>(connection.encryptedConfig).mac
+              : undefined,
+          url:
+            connection.type === 'm3u'
+              ? decrypt<{ url?: string }>(connection.encryptedConfig).url
+              : undefined,
           liveFormat:
             connection.type === 'xtream'
               ? (decrypt<XtreamConfig>(connection.encryptedConfig).liveFormat ?? 'm3u8')

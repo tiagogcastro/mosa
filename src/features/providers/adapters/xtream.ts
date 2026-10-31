@@ -36,8 +36,9 @@ async function get(config: XtreamConfig, action?: string, id?: string): Promise<
 export async function xtreamEpisodes(
   config: XtreamConfig,
   seriesId: string,
-): Promise<ImportItem[]> {
+): Promise<{ episodes: ImportItem[]; description: string | null; artwork: string | null }> {
   const details = object.parse(await get(config, 'get_series_info', seriesId));
+  const info = object.safeParse(details.info);
   const seasons = object.parse(details.episodes);
   const episodes: ImportItem[] = [];
   for (const [seasonKey, entries] of Object.entries(seasons)) {
@@ -69,7 +70,11 @@ export async function xtreamEpisodes(
       });
     }
   }
-  return episodes.slice(0, 2000);
+  return {
+    episodes: episodes.slice(0, 2000),
+    description: info.success ? string(info.data.plot).slice(0, 4000) || null : null,
+    artwork: info.success ? string(info.data.cover) || null : null,
+  };
 }
 export async function checkXtream(config: XtreamConfig) {
   const response = object.parse(await get(config));
@@ -82,6 +87,45 @@ export async function checkXtream(config: XtreamConfig) {
     expiration: string(user.exp_date) || null,
     maxConnections: string(user.max_connections) || null,
   };
+}
+
+export async function xtreamEpg(config: XtreamConfig, streamId: string) {
+  const url = new URL(endpoint(config, 'get_short_epg'));
+  url.searchParams.set('stream_id', streamId);
+  url.searchParams.set('limit', '4');
+  const response = object.parse(JSON.parse(await fetchRemote(url.toString(), 1024 * 1024)));
+  if (!Array.isArray(response.epg_listings)) {
+    return [];
+  }
+  return response.epg_listings.slice(0, 4).flatMap((entry) => {
+    const data = object.safeParse(entry);
+    if (!data.success) {
+      return [];
+    }
+    const start = Number(data.data.start_timestamp);
+    const end = Number(data.data.stop_timestamp);
+    if (
+      !Number.isFinite(start) ||
+      !Number.isFinite(end) ||
+      end <= start ||
+      end * 1000 < Date.now()
+    ) {
+      return [];
+    }
+    const decode = (value: unknown) => {
+      if (typeof value !== 'string' || value.length > 12000) {
+        return '';
+      }
+      try {
+        return Buffer.from(value, 'base64').toString('utf8').slice(0, 500);
+      } catch {
+        return '';
+      }
+    };
+    return [
+      { title: decode(data.data.title), description: decode(data.data.description), start, end },
+    ];
+  });
 }
 export async function importXtream(config: XtreamConfig): Promise<ImportItem[]> {
   const actions = ['get_live_streams', 'get_vod_streams', 'get_series'];
@@ -100,7 +144,7 @@ export async function importXtream(config: XtreamConfig): Promise<ImportItem[]> 
   const result: ImportItem[] = [];
   for (let i = 0; i < actions.length; i++) {
     const entries = z.array(object).parse(await get(config, actions[i]));
-    for (const entry of entries.slice(0, 20000)) {
+    for (const entry of entries.slice(0, 60000)) {
       const type = (['live', 'movie', 'series'] as const)[i];
       const id = string(entry.stream_id || entry.series_id);
       if (!id) {

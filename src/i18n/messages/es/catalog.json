@@ -15,7 +15,7 @@
     "noContent": "Conecta una fuente para ver contenido aquí.",
     "watch": "Ver ahora",
     "recent": "Recientes",
-    "importedCount": "{count} importados · reproducción sin verificar",
+    "importedCount": "{count} elementos en el catálogo",
     "pages": "Páginas del catálogo",
     "previousPage": "Anterior",
     "nextPage": "Siguiente",
@@ -23,13 +23,18 @@
     "viewAll": "Ver todos",
     "selectChannel": "Selecciona un canal para intentar reproducirlo",
     "channelSearch": "Buscar canales",
-    "unverified": "Listado por la fuente · reproducción sin verificar",
     "noEpisodes": "Esta fuente todavía no ofrece episodios. La reproducción no está disponible.",
     "episodeError": "No se pudieron cargar los episodios. Vuelve a abrir esta página más tarde.",
     "categorySearch": "Filtrar categorías",
     "sort": "Ordenar canales",
     "alphabetical": "Orden alfabético",
     "searchHint": "Busca un canal, película o serie…",
-    "closeSelection": "Cerrar detalles"
+    "closeSelection": "Cerrar detalles",
+    "programGuide": "Programación",
+    "nowPlaying": "Ahora",
+    "untitledProgram": "Programa sin título",
+    "previousEpisode": "Episodio anterior",
+    "nextEpisode": "Siguiente episodio",
+    "episodeProgress": "{percent}% visto"
   }
 }

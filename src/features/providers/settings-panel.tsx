@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, MoreHorizontal, Globe2 } from 'lucide-react';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -17,6 +18,10 @@ interface ConnectionSummary {
   enabled: boolean;
   syncedAt: string | null;
   liveFormat?: 'm3u8' | 'ts';
+  server?: string;
+  username?: string;
+  mac?: string;
+  url?: string;
 }
 const field =
   'min-h-11 w-full rounded-lg bg-surface px-3 text-foreground focus-visible:ring-1 focus-visible:ring-primary';
@@ -181,21 +186,52 @@ export function SettingsPanel({
           className="max-w-3xl space-y-5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6 lg:gap-y-5 lg:space-y-0"
         >
           <h2 className="font-heading text-xl font-semibold lg:col-span-2">{t('general')}</h2>
-          <label className="block space-y-2">
+          <div className="space-y-2">
             <span className="block text-sm font-medium">{t('language')}</span>
-            <select
-              value={locale}
-              className={field}
-              onChange={(event) => {
-                void save('language', event.target.value);
-                router.replace(pathname, { locale: event.target.value });
-              }}
-            >
-              <option value="pt-BR">Português (Brasil)</option>
-              <option value="en">English (United States)</option>
-              <option value="es">Español</option>
-            </select>
-          </label>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  type="button"
+                  className={`${field} flex items-center gap-3 text-left`}
+                  aria-label={t('language')}
+                >
+                  <Globe2 size={18} className="text-primary" />{' '}
+                  {locale === 'en'
+                    ? '🇺🇸 English'
+                    : locale === 'es'
+                      ? '🇪🇸 Español'
+                      : '🇧🇷 Português (Brasil)'}
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  align="start"
+                  sideOffset={5}
+                  className="z-50 min-w-56 rounded-xl border border-border bg-elevated p-1.5 shadow-xl"
+                >
+                  {(
+                    [
+                      { code: 'pt-BR', name: '🇧🇷 Português (Brasil)' },
+                      { code: 'en', name: '🇺🇸 English' },
+                      { code: 'es', name: '🇪🇸 Español' },
+                    ] as const
+                  ).map((option) => (
+                    <DropdownMenu.Item
+                      key={option.code}
+                      onSelect={() => {
+                        void save('language', option.code);
+                        router.replace(pathname, { locale: option.code });
+                      }}
+                      className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm outline-none focus:bg-primary/15"
+                    >
+                      {option.name}
+                      {locale === option.code && <Check size={16} className="text-primary" />}
+                    </DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+          </div>
           <label className="block space-y-2">
             <span className="block text-sm font-medium">{t('timezone')}</span>
             <select
@@ -327,7 +363,7 @@ export function SettingsPanel({
                       </span>
                     )}
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-4 flex items-center justify-between gap-2">
                     {activeId !== connection.id && connection.enabled && (
                       <Button
                         variant="primary"
@@ -337,45 +373,63 @@ export function SettingsPanel({
                         {t('selectProvider')}
                       </Button>
                     )}
-                    <Button
-                      variant="secondary"
-                      disabled={busy}
-                      onClick={() => setEditing(editing === connection.id ? null : connection.id)}
-                    >
-                      {t('edit')}
-                    </Button>
-                    {connection.type !== 'demo' && (
-                      <Button
-                        variant="secondary"
-                        disabled={busy}
-                        onClick={() => void updateProvider(connection.id, 'PATCH', {})}
-                      >
-                        {providerText('refresh')}
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      disabled={busy}
-                      onClick={() =>
-                        void updateProvider(connection.id, 'PATCH', {
-                          enabled: !connection.enabled,
-                        })
-                      }
-                    >
-                      {connection.enabled ? providerText('disable') : providerText('enable')}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="text-error hover:bg-error/10 hover:text-error"
-                      disabled={busy}
-                      onClick={() => {
-                        if (window.confirm(t('confirmRemove', { name: connection.name }))) {
-                          void updateProvider(connection.id, 'DELETE');
-                        }
-                      }}
-                    >
-                      {providerText('remove')}
-                    </Button>
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Trigger asChild>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          aria-label={`${t('actions')}: ${connection.name}`}
+                          className="ml-auto rounded-lg border border-border p-2 text-muted hover:bg-elevated hover:text-foreground"
+                        >
+                          <MoreHorizontal size={20} />
+                        </button>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.Content
+                          align="end"
+                          sideOffset={6}
+                          className="z-50 min-w-48 rounded-xl border border-border bg-elevated p-1.5 text-sm text-foreground shadow-2xl"
+                        >
+                          <DropdownMenu.Item
+                            onSelect={() =>
+                              setEditing(editing === connection.id ? null : connection.id)
+                            }
+                            className="cursor-pointer rounded-md px-3 py-2 outline-none focus:bg-primary/15"
+                          >
+                            {t('edit')}
+                          </DropdownMenu.Item>
+                          {connection.type !== 'demo' && (
+                            <DropdownMenu.Item
+                              onSelect={() => void updateProvider(connection.id, 'PATCH', {})}
+                              className="cursor-pointer rounded-md px-3 py-2 outline-none focus:bg-primary/15"
+                            >
+                              {providerText('refresh')}
+                            </DropdownMenu.Item>
+                          )}
+                          <DropdownMenu.Item
+                            onSelect={() =>
+                              void updateProvider(connection.id, 'PATCH', {
+                                enabled: !connection.enabled,
+                              })
+                            }
+                            className="cursor-pointer rounded-md px-3 py-2 outline-none focus:bg-primary/15"
+                          >
+                            {connection.enabled ? providerText('disable') : providerText('enable')}
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Separator className="my-1 h-px bg-border" />
+                          <DropdownMenu.Item
+                            onSelect={() => {
+                              if (window.confirm(t('confirmRemove', { name: connection.name }))) {
+                                void updateProvider(connection.id, 'DELETE');
+                              }
+                            }}
+                            className="cursor-pointer rounded-md px-3 py-2 text-error outline-none focus:bg-error/10"
+                          >
+                            {providerText('remove')}
+                          </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Root>
                   </div>
                   {editing === connection.id && (
                     <form
@@ -412,13 +466,17 @@ export function SettingsPanel({
                             <input
                               name="server"
                               type="url"
-                              placeholder={t('unchanged')}
+                              defaultValue={connection.server}
                               className={field}
                             />
                           </label>
                           <label className="text-sm">
                             {providerText('username')}
-                            <input name="username" placeholder={t('unchanged')} className={field} />
+                            <input
+                              name="username"
+                              defaultValue={connection.username}
+                              className={field}
+                            />
                           </label>
                           <label className="text-sm">
                             {providerText('password')}
@@ -429,6 +487,7 @@ export function SettingsPanel({
                               placeholder={t('unchanged')}
                               className={field}
                             />
+                            <span className="text-xs text-muted">{t('passwordSafety')}</span>
                           </label>
                           <label className="text-sm">
                             {providerText('liveFormat')}
@@ -450,7 +509,7 @@ export function SettingsPanel({
                             <input
                               name="server"
                               type="url"
-                              placeholder={t('unchanged')}
+                              defaultValue={connection.server}
                               className={field}
                             />
                           </label>
@@ -459,7 +518,7 @@ export function SettingsPanel({
                             <input
                               name="mac"
                               pattern="([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}"
-                              placeholder={t('unchanged')}
+                              defaultValue={connection.mac}
                               autoComplete="off"
                               className={field}
                             />
@@ -472,7 +531,7 @@ export function SettingsPanel({
                           <input
                             name="url"
                             type="url"
-                            placeholder={t('unchanged')}
+                            defaultValue={connection.url}
                             className={field}
                           />
                         </label>
@@ -516,6 +575,7 @@ export function SettingsPanel({
           </div>
           <p className="text-xs text-muted">{t('qrNote')}</p>
           <p className="text-xs text-muted">{t('macNote')}</p>
+          <p className="rounded-lg bg-elevated p-4 text-sm text-muted">{t('remoteExplanation')}</p>
           <PairDevice enabled={pairingEnabled} reachable={pairingReachable} />
         </section>
         <section
@@ -543,6 +603,8 @@ export function SettingsPanel({
             {t('version')} · {t('local')}
           </p>
           <p className="text-sm text-muted">{t('pwaNote')}</p>
+          <p className="text-sm text-muted">{t('aboutDetails')}</p>
+          <p className="text-xs text-muted">{t('copyright')}</p>
         </section>
         {message && (
           <p role="status" className="text-sm text-primary">

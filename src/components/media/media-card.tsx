@@ -12,6 +12,7 @@ export function MediaCard({
   duration,
   returnTo,
   kindLabel,
+  selected = false,
 }: {
   item: Item;
   favorite: boolean;
@@ -19,6 +20,7 @@ export function MediaCard({
   duration?: number | null;
   returnTo?: string;
   kindLabel: string;
+  selected?: boolean;
 }) {
   const section = item.type === 'live' ? '/live' : item.type === 'movie' ? '/movies' : '/series';
   const params = new URLSearchParams(returnTo?.split('?')[1] ?? '');
@@ -43,9 +45,9 @@ export function MediaCard({
           : Tv;
   return (
     <article className="group relative min-w-0">
-      <Link href={href} className="block">
+      <Link href={href} className="block" aria-current={selected ? 'true' : undefined}>
         <div
-          className={`relative overflow-hidden rounded-xl border border-border bg-surface ${item.type === 'live' ? 'aspect-video' : 'aspect-[2/3]'}`}
+          className={`relative overflow-hidden rounded-xl border bg-surface ${selected ? 'border-primary ring-2 ring-primary/55' : 'border-border group-hover:border-primary/60'} ${item.type === 'live' ? 'aspect-video' : 'aspect-[2/3]'}`}
         >
           <span className="absolute bottom-2 left-2 z-10 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 break-words rounded-md bg-background/90 px-2 py-1 text-[10px] font-bold tracking-wide text-primary backdrop-blur">
             <Icon size={13} className="shrink-0" />

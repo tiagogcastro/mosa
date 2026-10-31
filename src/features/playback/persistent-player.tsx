@@ -5,6 +5,7 @@ import { Move, MoveDiagonal2, PictureInPicture2, ScanLine, X } from 'lucide-reac
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { Player } from '@/features/playback/components/player';
+import { Tooltip } from '@/components/ui/tooltip';
 
 type Playback = {
   id: string;
@@ -12,7 +13,9 @@ type Playback = {
   type: string;
   position?: number;
   nextId?: string;
+  previousId?: string;
   autoNext?: boolean;
+  returnTo?: string;
 };
 type PlaybackContext = {
   floating: boolean;
@@ -51,6 +54,7 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const t = useTranslations('Player');
   const [item, setItem] = useState<Playback | null>(null);
+  const itemRef = useRef<Playback | null>(null);
   const [floating, setFloating] = useState(false);
   const floatingRef = useRef(false);
   const [bounds, setBounds] = useState<WindowBounds | null>(null);
@@ -66,13 +70,19 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
     y: number;
     start: WindowBounds;
   } | null>(null);
-  const updateFloating = useCallback((value: boolean) => {
-    if (value && !floatingRef.current) {
-      setBounds(initialBounds());
-    }
-    floatingRef.current = value;
-    setFloating(value);
-  }, []);
+  const updateFloating = useCallback(
+    (value: boolean) => {
+      if (value && !floatingRef.current) {
+        setBounds(initialBounds());
+      }
+      floatingRef.current = value;
+      setFloating(value);
+      if (value && pathname.startsWith('/watch/')) {
+        router.replace(itemRef.current?.returnTo ?? '/');
+      }
+    },
+    [pathname, router],
+  );
   const close = useCallback(
     (id?: string) => {
       setItem((current) => (!id || current?.id === id ? null : current));
@@ -91,10 +101,12 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
     [close],
   );
   const open = useCallback((next: Playback) => {
+    itemRef.current = next;
     setItem((current) => (current?.id === next.id ? current : next));
   }, []);
   const openFloating = useCallback(
     (next: Playback) => {
+      itemRef.current = next;
       updateFloating(true);
       setItem(next);
     },
@@ -202,57 +214,56 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
           </div>
           {floating && (
             <div className="order-first flex min-h-9 items-center gap-1 border-b border-border bg-surface px-1">
-              <button
-                type="button"
-                aria-label={t('movePlayer')}
-                title={t('movePlayer')}
-                onPointerDown={(event) => begin(event, 'move')}
-                onPointerMove={move}
-                onPointerUp={() => {
-                  drag.current = null;
-                }}
-                onPointerCancel={() => {
-                  drag.current = null;
-                }}
-                onKeyDown={(event) => {
-                  if (
-                    !bounds ||
-                    !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)
-                  ) {
-                    return;
-                  }
-                  event.preventDefault();
-                  setBounds(
-                    constrain({
-                      ...bounds,
-                      x:
-                        bounds.x +
-                        (event.key === 'ArrowLeft' ? -20 : event.key === 'ArrowRight' ? 20 : 0),
-                      y:
-                        bounds.y +
-                        (event.key === 'ArrowUp' ? -20 : event.key === 'ArrowDown' ? 20 : 0),
-                    }),
-                  );
-                }}
-                className="flex min-h-9 min-w-0 flex-1 cursor-grab touch-none items-center gap-2 rounded-md px-2 text-left text-muted hover:text-foreground active:cursor-grabbing focus-visible:text-primary"
-              >
-                <Move size={16} className="shrink-0" />
-                <span
-                  className="min-w-0 truncate text-xs font-medium text-foreground"
-                  title={item.title}
+              <Tooltip label={`${t('movePlayer')}: ${item.title}`}>
+                <button
+                  type="button"
+                  aria-label={t('movePlayer')}
+                  onPointerDown={(event) => begin(event, 'move')}
+                  onPointerMove={move}
+                  onPointerUp={() => {
+                    drag.current = null;
+                  }}
+                  onPointerCancel={() => {
+                    drag.current = null;
+                  }}
+                  onKeyDown={(event) => {
+                    if (
+                      !bounds ||
+                      !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)
+                    ) {
+                      return;
+                    }
+                    event.preventDefault();
+                    setBounds(
+                      constrain({
+                        ...bounds,
+                        x:
+                          bounds.x +
+                          (event.key === 'ArrowLeft' ? -20 : event.key === 'ArrowRight' ? 20 : 0),
+                        y:
+                          bounds.y +
+                          (event.key === 'ArrowUp' ? -20 : event.key === 'ArrowDown' ? 20 : 0),
+                      }),
+                    );
+                  }}
+                  className="flex min-h-9 min-w-0 flex-1 cursor-grab touch-none items-center gap-2 rounded-md px-2 text-left text-muted hover:text-foreground active:cursor-grabbing focus-visible:text-primary"
                 >
-                  {item.title}
-                </span>
-              </button>
-              <button
-                type="button"
-                aria-label={t('externalPip')}
-                title={t('externalPip')}
-                onClick={externalWindow}
-                className="rounded-md p-1.5 text-primary hover:bg-elevated"
-              >
-                <PictureInPicture2 size={17} />
-              </button>
+                  <Move size={16} className="shrink-0" />
+                  <span className="min-w-0 truncate text-xs font-medium text-foreground">
+                    {item.title}
+                  </span>
+                </button>
+              </Tooltip>
+              <Tooltip label={t('externalPip')}>
+                <button
+                  type="button"
+                  aria-label={t('externalPip')}
+                  onClick={externalWindow}
+                  className="rounded-md p-1.5 text-primary hover:bg-elevated"
+                >
+                  <PictureInPicture2 size={17} />
+                </button>
+              </Tooltip>
               <button
                 type="button"
                 aria-label={t('expandPlayer')}
@@ -277,46 +288,47 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
             </p>
           )}
           {floating && (
-            <button
-              type="button"
-              aria-label={t('resizePlayer')}
-              title={t('resizePlayer')}
-              onPointerDown={(event) => begin(event, 'resize')}
-              onPointerMove={move}
-              onPointerUp={() => {
-                drag.current = null;
-              }}
-              onPointerCancel={() => {
-                drag.current = null;
-              }}
-              onKeyDown={(event) => {
-                if (
-                  !bounds ||
-                  !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)
-                ) {
-                  return;
-                }
-                event.preventDefault();
-                setBounds(
-                  constrain({
-                    ...bounds,
-                    width: Math.max(
-                      Math.min(280, window.innerWidth - 16),
-                      bounds.width +
-                        (event.key === 'ArrowLeft' ? -20 : event.key === 'ArrowRight' ? 20 : 0),
-                    ),
-                    height: Math.max(
-                      Math.min(205, window.innerHeight - 16),
-                      bounds.height +
-                        (event.key === 'ArrowUp' ? -20 : event.key === 'ArrowDown' ? 20 : 0),
-                    ),
-                  }),
-                );
-              }}
-              className="flex h-6 w-full cursor-nwse-resize touch-none items-center justify-end border-t border-border bg-surface px-2 text-muted hover:text-primary"
-            >
-              <MoveDiagonal2 size={15} />
-            </button>
+            <Tooltip label={t('resizePlayer')}>
+              <button
+                type="button"
+                aria-label={t('resizePlayer')}
+                onPointerDown={(event) => begin(event, 'resize')}
+                onPointerMove={move}
+                onPointerUp={() => {
+                  drag.current = null;
+                }}
+                onPointerCancel={() => {
+                  drag.current = null;
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    !bounds ||
+                    !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)
+                  ) {
+                    return;
+                  }
+                  event.preventDefault();
+                  setBounds(
+                    constrain({
+                      ...bounds,
+                      width: Math.max(
+                        Math.min(280, window.innerWidth - 16),
+                        bounds.width +
+                          (event.key === 'ArrowLeft' ? -20 : event.key === 'ArrowRight' ? 20 : 0),
+                      ),
+                      height: Math.max(
+                        Math.min(205, window.innerHeight - 16),
+                        bounds.height +
+                          (event.key === 'ArrowUp' ? -20 : event.key === 'ArrowDown' ? 20 : 0),
+                      ),
+                    }),
+                  );
+                }}
+                className="flex h-6 w-full cursor-nwse-resize touch-none items-center justify-end border-t border-border bg-surface px-2 text-muted hover:text-primary"
+              >
+                <MoveDiagonal2 size={15} />
+              </button>
+            </Tooltip>
           )}
         </div>
       )}

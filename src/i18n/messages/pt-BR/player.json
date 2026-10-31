@@ -42,6 +42,9 @@
     "live": "Ao vivo",
     "playingInMini": "Reprodução no mini player. Selecione um canal na lista para trocar.",
     "accessDetail": "O servidor recusou esta transmissão (HTTP 401/403). Verifique se o teste ainda está ativo e se o provedor permite reproduzi-la neste dispositivo.",
-    "missingDetail": "A transmissão não existe mais neste endereço (HTTP 404). Atualize o catálogo ou consulte o provedor."
+    "missingDetail": "A transmissão não existe mais neste endereço (HTTP 404). Atualize o catálogo ou consulte o provedor.",
+    "exitFullscreen": "Sair da tela cheia",
+    "previousEpisode": "Episódio anterior",
+    "nextEpisode": "Próximo episódio"
   }
 }

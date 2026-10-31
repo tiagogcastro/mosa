@@ -44,6 +44,7 @@
     "largePlaylist": "La lista supera los 8 MB. Si tienes DNS, usuario y contraseña, usa credenciales de mensaje (Xtream) en vez de importar la lista enorme.",
     "connectedCount": "Lista válida: {count} entradas encontradas.",
     "importNote": "Verificar prueba las credenciales; Guardar también importa el catálogo. La reproducción depende del enlace, navegador y permisos del proveedor.",
-    "liveFormat": "Formato de canales en vivo (usa TS si el mensaje dice output=ts)"
+    "liveFormat": "Formato de canales en vivo (usa TS si el mensaje dice output=ts)",
+    "defaultName": "Mi fuente"
   }
 }

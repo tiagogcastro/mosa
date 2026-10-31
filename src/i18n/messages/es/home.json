@@ -8,6 +8,12 @@
     "discover": "Descubre en Mosa",
     "recentlyAdded": "Añadidos al catálogo",
     "noProvider": "Todo listo para empezar",
-    "noProviderText": "Mosa organiza las fuentes que elijas. Tus datos permanecen en tu dispositivo."
+    "noProviderText": "Mosa organiza las fuentes que elijas. Tus datos permanecen en tu dispositivo.",
+    "libraryIntro": "Tu historial y favoritos, organizados por separado.",
+    "favoritesCount": "{count} elementos guardados",
+    "watching": "Continúa donde lo dejaste",
+    "watchingDescription": "Vídeos en curso y últimos canales visitados.",
+    "favoritesDescription": "Elementos que guardaste para encontrarlos de nuevo.",
+    "noFavorites": "Aún no has guardado favoritos."
   }
 }
