@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { resolveSource } from '@/features/providers/service';
 import { failure } from '@/lib/security/request';
 export const runtime = 'nodejs';
-export function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const mediaId = request.nextUrl.searchParams.get('id');
     if (!mediaId) {
@@ -12,7 +12,7 @@ export function GET(request: NextRequest) {
       );
     }
 
-    const result = resolveSource(mediaId);
+    const result = await resolveSource(mediaId);
     if (!result.success) {
       return NextResponse.json({ success: false, error: { code: result.error } }, { status: 404 });
     }

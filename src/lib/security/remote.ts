@@ -33,15 +33,22 @@ export async function validateRemoteUrl(input: string) {
   return url;
 }
 
-export async function fetchRemote(input: string, maxBytes = 8 * 1024 * 1024): Promise<string> {
+export async function fetchRemote(
+  input: string,
+  maxBytes = 8 * 1024 * 1024,
+  headers: Record<string, string> = {},
+): Promise<string> {
   let url = input;
   for (let i = 0; i < 4; i++) {
     await validateRemoteUrl(url);
+    if (Object.keys(headers).length && new URL(url).origin !== new URL(input).origin) {
+      throw new Error('Authenticated redirect to another host blocked');
+    }
     const response = await fetch(url, {
       redirect: 'manual',
       signal: AbortSignal.timeout(15000),
       cache: 'no-store',
-      headers: { Accept: 'application/json, application/x-mpegURL, text/plain, */*' },
+      headers: { Accept: 'application/json, application/x-mpegURL, text/plain, */*', ...headers },
     });
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get('location');

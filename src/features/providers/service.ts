@@ -4,11 +4,19 @@ import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db/client';
 import { media, providers } from '@/db/schema';
+import { activeProviderId, selectActiveProvider } from '@/features/providers/active';
 import { encrypt, decrypt } from '@/lib/security/crypto';
 import { fetchRemote } from '@/lib/security/remote';
 import type { ImportItem } from '@/features/catalog/normalize';
 import type { Result } from '@/lib/result';
 import { parseM3u } from '@/features/providers/adapters/m3u';
+import {
+  authenticateStalker,
+  importStalker,
+  stalkerConfig,
+  stalkerSource,
+  type StalkerConfig,
+} from '@/features/providers/adapters/stalker';
 import {
   checkXtream,
   importXtream,
@@ -19,6 +27,7 @@ import {
 } from '@/features/providers/adapters/xtream';
 
 export const connectionSchema = z.discriminatedUnion('type', [
+  stalkerConfig.extend({ type: z.literal('stalker'), name: z.string().trim().min(1).max(80) }),
   z.object({
     type: z.literal('xtream'),
     name: z.string().trim().min(1).max(80),
@@ -40,6 +49,10 @@ export const connectionSchema = z.discriminatedUnion('type', [
 ]);
 export type Connection = z.infer<typeof connectionSchema>;
 export async function inspectConnection(config: Connection) {
+  if (config.type === 'stalker') {
+    const { expiresAt } = await authenticateStalker(config);
+    return { status: 'Authenticated', expiration: expiresAt };
+  }
   if (config.type === 'xtream') {
     return checkXtream(xtreamConfig.parse(config));
   }
@@ -50,7 +63,9 @@ export async function inspectConnection(config: Connection) {
 export async function importConnection(config: Connection) {
   let items: ImportItem[];
 
-  if (config.type === 'xtream') {
+  if (config.type === 'stalker') {
+    items = await importStalker(config);
+  } else if (config.type === 'xtream') {
     await checkXtream(config);
     items = await importXtream(config);
   } else {
@@ -73,6 +88,7 @@ export async function importConnection(config: Connection) {
       .run();
     insertItems(tx, providerId, items);
   });
+  selectActiveProvider(providerId);
   return { id: providerId, count: items.length };
 }
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -128,9 +144,11 @@ export async function refreshProvider(providerId: string): Promise<Result<{ coun
     return { success: false, error: 'INVALID_INPUT' };
   }
   const items =
-    config.type === 'xtream'
-      ? await importXtream(config)
-      : parseM3u(await fetchRemote(config.url ?? ''));
+    config.type === 'stalker'
+      ? await importStalker(config)
+      : config.type === 'xtream'
+        ? await importXtream(config)
+        : parseM3u(await fetchRemote(config.url ?? ''));
   db.transaction((tx) => {
     insertItems(tx, providerId, items);
     tx.update(providers)
@@ -140,16 +158,27 @@ export async function refreshProvider(providerId: string): Promise<Result<{ coun
   });
   return { success: true, data: { count: items.length } };
 }
-export function resolveSource(mediaId: string): Result<{ url: string; format: string }> {
+export async function resolveSource(
+  mediaId: string,
+): Promise<Result<{ url: string; format: string }>> {
   const item = db.select().from(media).where(eq(media.id, mediaId)).get();
   if (!item) {
     return { success: false, error: 'MEDIA_NOT_FOUND' };
   }
   const provider = db.select().from(providers).where(eq(providers.id, item.providerId)).get();
-  if (!provider?.enabled) {
+  if (!provider?.enabled || provider.id !== activeProviderId()) {
     return { success: false, error: 'SOURCE_UNAVAILABLE' };
   }
   let url = item.sourceUrl;
+  if (provider.type === 'stalker') {
+    if (item.type !== 'live' || !url) {
+      return { success: false, error: 'SOURCE_UNAVAILABLE' };
+    }
+    url = await stalkerSource(
+      decrypt<StalkerConfig>(provider.encryptedConfig),
+      decrypt<string>(url),
+    );
+  }
   if (provider.type === 'm3u' && url) {
     url = decrypt<string>(url);
   }

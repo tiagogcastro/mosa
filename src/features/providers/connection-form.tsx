@@ -10,7 +10,7 @@ import { useRouter } from '@/i18n/navigation';
 export function ConnectionForm() {
   const translations = useTranslations('Providers');
   const router = useRouter();
-  const [connectionType, setConnectionType] = useState<'xtream' | 'm3u'>('m3u');
+  const [connectionType, setConnectionType] = useState<'xtream' | 'm3u' | 'stalker'>('m3u');
   const [playlistFile, setPlaylistFile] = useState<File | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -30,11 +30,17 @@ export function ConnectionForm() {
               username: String(form.get('username') || ''),
               password: String(form.get('password') || ''),
             }
-          : {
-              ...base,
-              url: form.get('url') ? String(form.get('url')) : undefined,
-              content: playlistFile ? await playlistFile.text() : undefined,
-            };
+          : connectionType === 'stalker'
+            ? {
+                ...base,
+                server: String(form.get('server') || ''),
+                mac: String(form.get('mac') || ''),
+              }
+            : {
+                ...base,
+                url: form.get('url') ? String(form.get('url')) : undefined,
+                content: playlistFile ? await playlistFile.text() : undefined,
+              };
 
       const response = await fetch(checkOnly ? '/api/providers/check' : '/api/providers', {
         method: 'POST',
@@ -77,10 +83,13 @@ export function ConnectionForm() {
           <select
             className={inputClass}
             value={connectionType}
-            onChange={(event) => setConnectionType(event.target.value as 'xtream' | 'm3u')}
+            onChange={(event) =>
+              setConnectionType(event.target.value as 'xtream' | 'm3u' | 'stalker')
+            }
           >
             <option value="m3u">M3U</option>
             <option value="xtream">Xtream Codes</option>
+            <option value="stalker">Stalker / MAG (authorized)</option>
           </select>
         </label>
         <label className="grid gap-2 text-sm">
@@ -102,6 +111,31 @@ export function ConnectionForm() {
               {translations('password')}
               <input name="password" type="password" required className={inputClass} />
             </label>
+          </>
+        ) : connectionType === 'stalker' ? (
+          <>
+            <label className="grid gap-2 text-sm">
+              {translations('server')}
+              <input
+                name="server"
+                type="url"
+                required
+                placeholder="https://provider.example/portal.php"
+                className={inputClass}
+              />
+            </label>
+            <label className="grid gap-2 text-sm">
+              {translations('registeredMac')}
+              <input
+                name="mac"
+                required
+                pattern="([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}"
+                placeholder="00:1A:79:XX:XX:XX"
+                autoComplete="off"
+                className={inputClass}
+              />
+            </label>
+            <p className="text-sm text-muted">{translations('stalkerNote')}</p>
           </>
         ) : (
           <>

@@ -22,6 +22,8 @@
     "noPassword": "Leave blank to keep the current password",
     "limit": "Imports are limited to 20,000 entries and 8 MB.",
     "disable": "Disable",
-    "enable": "Enable"
+    "enable": "Enable",
+    "registeredMac": "Provider-registered MAC",
+    "stalkerNote": "Enter only a MAC assigned or authorized by your provider. The Mosa Device ID cannot authenticate a portal. Other portal variants may differ."
   }
 }

@@ -22,6 +22,8 @@
     "noPassword": "Deixe em branco para manter a senha atual",
     "limit": "A importação aceita até 20.000 entradas e 8 MB.",
     "disable": "Desativar",
-    "enable": "Ativar"
+    "enable": "Ativar",
+    "registeredMac": "MAC registrado no provedor",
+    "stalkerNote": "Informe apenas o MAC atribuído ou autorizado pelo seu provedor. O ID do Mosa não autentica portais. Compatibilidade com outros modelos de portal pode variar."
   }
 }
