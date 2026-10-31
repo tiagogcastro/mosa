@@ -27,6 +27,7 @@ import {
   xtreamConfig,
   type XtreamConfig,
   xtreamEpisodes,
+  xtreamMovieDetails,
 } from '@/features/providers/adapters/xtream';
 
 export const connectionSchema = z.discriminatedUnion('type', [
@@ -369,4 +370,33 @@ export async function loadSeriesEpisodes(seriesId: string) {
     }
   });
   return db.select().from(media).where(eq(media.parentId, seriesId)).all();
+}
+
+export async function loadMovieDetails(movieId: string) {
+  const movie = db.select().from(media).where(eq(media.id, movieId)).get();
+  if (
+    !movie ||
+    movie.type !== 'movie' ||
+    movie.providerId !== activeProviderId() ||
+    !mediaIsVisible(movieId)
+  ) {
+    return;
+  }
+  const provider = db.select().from(providers).where(eq(providers.id, movie.providerId)).get();
+  if (!provider?.enabled || provider.type !== 'xtream' || movie.description) {
+    return;
+  }
+  const details = await xtreamMovieDetails(
+    decrypt<XtreamConfig>(provider.encryptedConfig),
+    movie.externalId,
+  );
+  if (details.description || details.artwork) {
+    db.update(media)
+      .set({
+        description: details.description || movie.description,
+        artwork: details.artwork || movie.artwork,
+      })
+      .where(eq(media.id, movieId))
+      .run();
+  }
 }

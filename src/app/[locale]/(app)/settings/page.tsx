@@ -11,6 +11,7 @@ import type { XtreamConfig } from '@/features/providers/adapters/xtream';
 import type { StalkerConfig } from '@/features/providers/adapters/stalker';
 import { activeProfile } from '@/features/profiles/service';
 import { eq } from 'drizzle-orm';
+import { savedSourceHealth } from '@/features/providers/health';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,12 +25,12 @@ export default async function SettingsPage() {
       enabled: providers.enabled,
       type: providers.type,
       syncedAt: providers.syncedAt,
-      status: providers.status,
       encryptedConfig: providers.encryptedConfig,
     })
     .from(providers)
     .where(eq(providers.id, profile.providerId ?? ''))
     .all();
+  const activeId = activeProviderId();
   const current = connections[0];
   const rawServer =
     current?.type === 'xtream'
@@ -78,7 +79,7 @@ export default async function SettingsPage() {
             !!decrypt<{ local?: boolean }>(connection.encryptedConfig).local,
           encryptedConfig: undefined,
         }))}
-        activeId={activeProviderId()}
+        activeId={activeId}
         deviceId={deviceId()}
         pairingEnabled={authEnabled()}
         pairingReachable={!!publicOrigin()}
@@ -88,7 +89,8 @@ export default async function SettingsPage() {
         initialTheme={preference('theme', 'dark')}
         initialDefaultFormat={preference('default_stream_format', 'auto')}
         networkHost={networkHost}
-        networkStatus={current?.status ?? null}
+        networkProviderId={activeId}
+        networkHealth={savedSourceHealth(activeId)}
         networkFormat={
           current?.type === 'xtream'
             ? (decrypt<XtreamConfig>(current.encryptedConfig).liveFormat ??

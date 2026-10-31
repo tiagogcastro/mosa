@@ -24,6 +24,38 @@ import {
 } from 'lucide-react';
 import { Tooltip } from '@/components/ui/tooltip';
 
+async function isTransportStream(url: string) {
+  const response = await fetch(url, {
+    headers: { Range: 'bytes=0-1023' },
+    cache: 'no-store',
+    signal: AbortSignal.timeout(7000),
+  });
+  if (!response.ok) {
+    void response.body?.cancel().catch(() => {});
+    return false;
+  }
+  const reader = response.body?.getReader();
+  if (!reader) {
+    return false;
+  }
+  const prefix = new Uint8Array(189);
+  let length = 0;
+  while (length < prefix.length) {
+    const { value, done } = await reader.read();
+    if (done) {
+      break;
+    }
+    const take = Math.min(value.length, prefix.length - length);
+    prefix.set(value.subarray(0, take), length);
+    length += take;
+  }
+  void reader.cancel().catch(() => {});
+  return (
+    (length === 189 && prefix[0] === 0x47 && prefix[188] === 0x47) ||
+    (length >= 3 && prefix[0] === 0x46 && prefix[1] === 0x4c && prefix[2] === 0x56)
+  );
+}
+
 export function Player({
   id,
   title,
@@ -210,6 +242,22 @@ export function Player({
         if (selected.format === 'hls' && element.canPlayType('application/vnd.apple.mpegurl')) {
           element.src = selected.url;
         } else if (selected.format === 'direct' && /\.ts(?:\?|$)/i.test(selected.url)) {
+          // Some providers return an HTML error or HLS under a .ts URL. Avoid
+          // passing those bytes to mpegts.js, which cannot decode them.
+          if (!(await isTransportStream(selected.url))) {
+            if (disposed) {
+              return;
+            }
+            if (tryAlternate()) {
+              return;
+            }
+            setDetail(t('formatDetail'));
+            setError(t('error'));
+            return;
+          }
+          if (disposed) {
+            return;
+          }
           const mpegtsLibrary = await import('mpegts.js');
           if (disposed) {
             return;

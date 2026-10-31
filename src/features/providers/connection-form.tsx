@@ -127,6 +127,10 @@ export function ConnectionForm({
               ? t('connectedCount', { count: result.count })
               : undefined,
         });
+        if (editing) {
+          window.location.reload();
+          return;
+        }
         onSuccess?.();
         if (!onSuccess) {
           router.push('/');
@@ -149,9 +153,10 @@ export function ConnectionForm({
         event.preventDefault();
         void submit(event.currentTarget, false);
       }}
-      className="space-y-4"
+      className="grid min-w-0 gap-4 sm:grid-cols-2"
     >
       <Tabs
+        className="min-w-0 sm:col-span-2"
         value={type}
         onValueChange={(value) => {
           setType(value as ConnectionType);
@@ -178,7 +183,7 @@ export function ConnectionForm({
           </TabsTrigger>
         </TabsList>
       </Tabs>
-      <label className="block space-y-1.5 text-sm font-medium">
+      <label className="block min-w-0 space-y-1.5 text-sm font-medium">
         {t('name')}
         <input
           name="name"
@@ -191,7 +196,7 @@ export function ConnectionForm({
       </label>
       {type === 'xtream' ? (
         <>
-          <label className="block space-y-1.5 text-sm font-medium">
+          <label className="block min-w-0 space-y-1.5 text-sm font-medium">
             {t('server')}
             <input
               name="server"
@@ -203,7 +208,7 @@ export function ConnectionForm({
               className={input}
             />
           </label>
-          <label className="block space-y-1.5 text-sm font-medium">
+          <label className="block min-w-0 space-y-1.5 text-sm font-medium">
             {t('username')}
             <input
               name="username"
@@ -215,9 +220,11 @@ export function ConnectionForm({
             />
           </label>
           {editing ? (
-            <PasswordEditor providerId={editing.id} fieldClass={input} />
+            <div className="min-w-0">
+              <PasswordEditor providerId={editing.id} fieldClass={input} />
+            </div>
           ) : (
-            <label className="block space-y-1.5 text-sm font-medium">
+            <label className="block min-w-0 space-y-1.5 text-sm font-medium">
               {t('password')}
               <input
                 name="password"
@@ -228,7 +235,7 @@ export function ConnectionForm({
               />
             </label>
           )}
-          <label className="block space-y-1.5 text-sm font-medium">
+          <label className="block min-w-0 space-y-1.5 text-sm font-medium sm:col-span-2">
             {t('liveFormat')}
             <select
               value={format}
@@ -245,7 +252,7 @@ export function ConnectionForm({
       ) : (
         <>
           {!editing?.local && (
-            <label className="block space-y-1.5 text-sm font-medium">
+            <label className="block min-w-0 space-y-1.5 text-sm font-medium">
               {t('playlist')}
               <input
                 name="url"
@@ -259,7 +266,7 @@ export function ConnectionForm({
             </label>
           )}
           {!editing && (
-            <label className="block space-y-1.5 text-sm font-medium">
+            <label className="block min-w-0 space-y-1.5 text-sm font-medium">
               {t('file')}
               <input
                 type="file"
@@ -270,7 +277,7 @@ export function ConnectionForm({
             </label>
           )}
           {!editing && (
-            <details className="text-sm text-muted">
+            <details className="text-sm text-muted sm:col-span-2">
               <summary className="cursor-pointer text-primary">{t('advancedOptions')}</summary>
               <label className="mt-2 block space-y-1.5">
                 {t('epgUrl')}
@@ -284,13 +291,15 @@ export function ConnectionForm({
               </label>
             </details>
           )}
-          {editing?.local && <p className="text-sm text-muted">{t('localFileRequired')}</p>}
+          {editing?.local && (
+            <p className="text-sm text-muted sm:col-span-2">{t('localFileRequired')}</p>
+          )}
         </>
       )}
       {feedback && (
         <div
           role={feedback.status === 'error' ? 'alert' : 'status'}
-          className={`flex items-start gap-2 rounded-lg px-3 py-2 text-sm ${feedback.status === 'success' ? 'bg-emerald-500/10 text-success' : 'bg-red-500/10 text-error'}`}
+          className={`flex items-start gap-2 rounded-lg px-3 py-2 text-sm sm:col-span-2 ${feedback.status === 'success' ? 'bg-emerald-500/10 text-success' : 'bg-red-500/10 text-error'}`}
         >
           {feedback.status === 'success' ? (
             <CircleCheck size={18} className="mt-0.5 shrink-0" />
@@ -303,7 +312,7 @@ export function ConnectionForm({
           </span>
         </div>
       )}
-      <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+      <div className="flex flex-wrap items-center justify-end gap-2 pt-2 sm:col-span-2">
         <Button
           type="button"
           variant="secondary"

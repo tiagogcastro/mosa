@@ -14,6 +14,7 @@ import { CatalogSearch } from '@/components/media/catalog-search';
 import { DetailPage } from '@/components/media/detail-page';
 import { NoActiveSource } from '@/components/media/no-active-source';
 import { activeProviderId } from '@/features/providers/active';
+import { SelectionFocus } from '@/components/media/selection-focus';
 
 export async function CatalogPage({
   type,
@@ -102,6 +103,7 @@ export async function CatalogPage({
             className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain pr-1"
             id="catalog-content"
           >
+            <SelectionFocus selectedId={selected?.id ?? null} />
             {selected && (
               <section
                 id="selection"
