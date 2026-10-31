@@ -20,10 +20,33 @@ export function GlobalSearch({ close }: { close: () => void }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     input.current?.focus();
     function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         close();
+      }
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const links = [
+          ...(dialog.current?.querySelectorAll<HTMLAnchorElement>('[data-search-result]') ?? []),
+        ];
+        if (!links.length) {
+          return;
+        }
+        event.preventDefault();
+        const index = links.indexOf(document.activeElement as HTMLAnchorElement);
+        const next =
+          event.key === 'ArrowDown'
+            ? Math.min(index + 1, links.length - 1)
+            : Math.max(index - 1, 0);
+        links[next]?.focus();
+      }
+      if (event.key === 'Enter' && document.activeElement === input.current) {
+        const first = dialog.current?.querySelector<HTMLAnchorElement>('[data-search-result]');
+        if (first) {
+          event.preventDefault();
+          first.click();
+        }
       }
       if (event.key === 'Tab' && dialog.current) {
         const elements = dialog.current.querySelectorAll<HTMLElement>('input, button, a');
@@ -39,7 +62,10 @@ export function GlobalSearch({ close }: { close: () => void }) {
       }
     }
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      opener?.focus();
+    };
   }, [close]);
 
   useEffect(() => {
@@ -97,7 +123,7 @@ export function GlobalSearch({ close }: { close: () => void }) {
               setResults(null);
               setLoading(!!event.target.value.trim());
             }}
-            placeholder={common('search')}
+            placeholder={t('searchHint')}
             aria-label={common('search')}
             className="w-full bg-transparent py-2 outline-none"
           />
@@ -106,6 +132,7 @@ export function GlobalSearch({ close }: { close: () => void }) {
           </button>
         </div>
         <div className="max-h-[65vh] overflow-y-auto pt-3">
+          {!query.trim() && <p className="px-4 py-5 text-sm text-muted">{t('searchHint')}</p>}
           {loading && <p className="p-4 text-muted">{common('loading')}</p>}
           {!loading && query.trim() && results && types.every((type) => !results[type].length) && (
             <p className="p-4 text-muted">{t('noResults')}</p>
@@ -130,6 +157,7 @@ export function GlobalSearch({ close }: { close: () => void }) {
                     </div>
                     {results[type].map((item) => (
                       <Link
+                        data-search-result
                         key={item.id}
                         onClick={close}
                         href={

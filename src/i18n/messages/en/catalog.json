@@ -25,6 +25,10 @@
     "channelSearch": "Search channels",
     "unverified": "Listed by provider · playback unverified",
     "noEpisodes": "No episodes are available from this source yet. Playback is not available.",
-    "episodeError": "Could not load episodes from this provider. Try opening this page again later."
+    "episodeError": "Could not load episodes from this provider. Try opening this page again later.",
+    "categorySearch": "Filter categories",
+    "sort": "Sort channels",
+    "alphabetical": "Alphabetical",
+    "searchHint": "Search for a channel, movie, or series…"
   }
 }

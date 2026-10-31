@@ -7,6 +7,9 @@
     "library": "Mi biblioteca",
     "settings": "Configuración",
     "connect": "Añadir fuente",
-    "brand": "Mosa"
+    "brand": "Mosa",
+    "provider": "Fuente activa",
+    "collapse": "Contraer menú",
+    "expand": "Expandir menú"
   }
 }

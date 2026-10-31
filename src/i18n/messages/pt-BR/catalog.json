@@ -25,6 +25,10 @@
     "channelSearch": "Buscar canais",
     "unverified": "Listado pela fonte · reprodução não verificada",
     "noEpisodes": "Esta fonte ainda não oferece episódios. A reprodução não está disponível.",
-    "episodeError": "Não foi possível carregar os episódios desta fonte. Abra esta página novamente mais tarde."
+    "episodeError": "Não foi possível carregar os episódios desta fonte. Abra esta página novamente mais tarde.",
+    "categorySearch": "Filtrar categorias",
+    "sort": "Ordenar canais",
+    "alphabetical": "Ordem alfabética",
+    "searchHint": "Digite o nome de um canal, filme ou série…"
   }
 }

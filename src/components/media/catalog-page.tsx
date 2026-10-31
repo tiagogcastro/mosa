@@ -8,18 +8,19 @@ export async function CatalogPage({
   searchParams,
 }: {
   type: 'live' | 'movie' | 'series';
-  searchParams: Promise<{ q?: string; category?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; page?: string; sort?: string }>;
 }) {
   const query = await searchParams;
   const t = await getTranslations('Catalog');
   const section = type === 'movie' ? 'movies' : type === 'series' ? 'series' : 'live';
+  const sort = query.sort === 'alpha' ? 'alpha' : 'recent';
   const total = catalogCount(type, query.q || '', query.category || '');
   const lastPage = Math.max(1, Math.ceil(total / 48));
   const requestedPage = Number(query.page);
   const page = Number.isSafeInteger(requestedPage)
     ? Math.min(lastPage, Math.max(1, requestedPage))
     : 1;
-  const items = catalog(type, query.q || '', query.category || '', page);
+  const items = catalog(type, query.q || '', query.category || '', page, 48, sort);
   const categories = catalogCategories(type);
   function pageHref(target: number) {
     const params = new URLSearchParams();
@@ -30,6 +31,7 @@ export async function CatalogPage({
       params.set('category', query.category);
     }
     params.set('page', String(target));
+    params.set('sort', sort);
     return `/${section}?${params}`;
   }
   const returnTo = pageHref(page);
@@ -61,6 +63,15 @@ export async function CatalogPage({
               {category.name} ({category.count})
             </option>
           ))}
+        </select>
+        <select
+          name="sort"
+          defaultValue={sort}
+          aria-label={t('sort')}
+          className="h-11 rounded-lg bg-surface px-4 text-foreground"
+        >
+          <option value="recent">{t('recent')}</option>
+          <option value="alpha">{t('alphabetical')}</option>
         </select>
         <button className="h-11 rounded-lg bg-primary px-5 font-semibold text-background">
           {t('filter')}

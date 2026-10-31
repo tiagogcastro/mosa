@@ -2,6 +2,11 @@ import 'server-only';
 import { and, asc, desc, eq, like, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { favorites, media, progress, providers } from '@/db/schema';
+import { activeProviderId } from '@/features/providers/active';
+
+function activeCondition() {
+  return eq(providers.id, activeProviderId() ?? '');
+}
 
 function searchCondition(search: string) {
   let title = sql`${media.title}`;
@@ -25,14 +30,26 @@ function searchCondition(search: string) {
   return like(sql`lower(${title})`, `%${normalized}%`);
 }
 
-export function catalog(type: string, search = '', category = '', page = 1, size = 48) {
-  const conditions = [eq(media.type, type), eq(providers.enabled, true)];
+export function catalog(
+  type: string,
+  search = '',
+  category = '',
+  page = 1,
+  size = 48,
+  sort: 'recent' | 'alpha' = 'recent',
+) {
+  const conditions = [eq(media.type, type), activeCondition()];
   if (search) {
     conditions.push(searchCondition(search));
   }
   if (category) {
     conditions.push(eq(media.category, category));
   }
+  const order =
+    sort === 'alpha'
+      ? [asc(sql`${media.title} collate nocase`), asc(media.id)]
+      : [desc(media.addedAt), asc(media.id)];
+
   return db
     .select({
       item: media,
@@ -45,13 +62,13 @@ export function catalog(type: string, search = '', category = '', page = 1, size
     .leftJoin(favorites, eq(favorites.mediaId, media.id))
     .leftJoin(progress, eq(progress.mediaId, media.id))
     .where(and(...conditions))
-    .orderBy(desc(media.addedAt), asc(media.id))
+    .orderBy(...order)
     .limit(size)
     .offset((Math.max(1, page) - 1) * size)
     .all();
 }
 export function catalogCount(type: string, search = '', category = '') {
-  const conditions = [eq(media.type, type), eq(providers.enabled, true)];
+  const conditions = [eq(media.type, type), activeCondition()];
   if (search) {
     conditions.push(searchCondition(search));
   }
@@ -72,7 +89,7 @@ export function catalogCategories(type: string) {
     .select({ name: media.category, count: sql<number>`count(*)` })
     .from(media)
     .innerJoin(providers, eq(providers.id, media.providerId))
-    .where(and(eq(media.type, type), eq(providers.enabled, true)))
+    .where(and(eq(media.type, type), activeCondition()))
     .groupBy(media.category)
     .orderBy(asc(media.category))
     .all()
@@ -101,7 +118,7 @@ export function mediaById(id: string) {
     .innerJoin(providers, eq(providers.id, media.providerId))
     .leftJoin(favorites, eq(favorites.mediaId, media.id))
     .leftJoin(progress, eq(progress.mediaId, media.id))
-    .where(and(eq(media.id, id), eq(providers.enabled, true)))
+    .where(and(eq(media.id, id), activeCondition()))
     .get();
 }
 export function saved() {
@@ -116,7 +133,7 @@ export function saved() {
     .innerJoin(providers, eq(providers.id, media.providerId))
     .innerJoin(favorites, eq(favorites.mediaId, media.id))
     .leftJoin(progress, eq(progress.mediaId, media.id))
-    .where(eq(providers.enabled, true))
+    .where(activeCondition())
     .orderBy(desc(favorites.createdAt))
     .limit(80)
     .all();
@@ -133,13 +150,7 @@ export function continuing() {
     .innerJoin(media, eq(progress.mediaId, media.id))
     .innerJoin(providers, eq(providers.id, media.providerId))
     .leftJoin(favorites, eq(favorites.mediaId, media.id))
-    .where(
-      and(
-        eq(progress.completed, false),
-        eq(providers.enabled, true),
-        sql`${progress.position} > 0`,
-      ),
-    )
+    .where(and(eq(progress.completed, false), activeCondition(), sql`${progress.position} > 0`))
     .orderBy(desc(progress.watchedAt))
     .limit(24)
     .all();
@@ -156,7 +167,7 @@ export function recentChannels() {
     .innerJoin(media, eq(progress.mediaId, media.id))
     .innerJoin(providers, eq(providers.id, media.providerId))
     .leftJoin(favorites, eq(favorites.mediaId, media.id))
-    .where(and(eq(media.type, 'live'), eq(providers.enabled, true)))
+    .where(and(eq(media.type, 'live'), activeCondition()))
     .orderBy(desc(progress.watchedAt))
     .limit(16)
     .all();

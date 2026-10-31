@@ -7,6 +7,9 @@
     "library": "My library",
     "settings": "Settings",
     "connect": "Add source",
-    "brand": "Mosa"
+    "brand": "Mosa",
+    "provider": "Active source",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
   }
 }
