@@ -4,6 +4,7 @@ import { db } from '@/db/client';
 import { media } from '@/db/schema';
 import { mediaById } from '@/features/catalog/queries';
 import { Player } from '@/features/playback/components/player';
+import { preference } from '@/features/settings/preferences';
 export const dynamic = 'force-dynamic';
 export default async function Page({ params }: PageProps<'/[locale]/watch/[type]/[id]'>) {
   const { id, type } = await params;
@@ -35,6 +36,7 @@ export default async function Page({ params }: PageProps<'/[locale]/watch/[type]
       type={type}
       position={row.position || 0}
       nextId={next?.id}
+      autoNext={preference('autoplay_next', 'false') === 'true'}
     />
   );
 }

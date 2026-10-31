@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import type shakaPlayer from 'shaka-player';
 import { useRouter } from '@/i18n/navigation';
 import {
   ArrowLeft,
@@ -12,6 +13,7 @@ import {
   RotateCw,
   Volume2,
   VolumeX,
+  PictureInPicture2,
 } from 'lucide-react';
 
 export function Player({
@@ -22,6 +24,8 @@ export function Player({
   nextId,
   compact = false,
   onClose,
+  autoNext = false,
+  preferredSpeed = 1,
 }: {
   id: string;
   title: string;
@@ -30,10 +34,13 @@ export function Player({
   nextId?: string;
   compact?: boolean;
   onClose?: () => void;
+  autoNext?: boolean;
+  preferredSpeed?: number;
 }) {
+  const frame = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const played = useRef(false);
-  const shaka = useRef<{ destroy: () => Promise<void> } | null>(null);
+  const shaka = useRef<shakaPlayer.Player | null>(null);
   const t = useTranslations('Player');
   const router = useRouter();
   const [error, setError] = useState('');
@@ -43,6 +50,11 @@ export function Player({
   const [duration, setDuration] = useState(0);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [retry, setRetry] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [qualities, setQualities] = useState<{ id: number; height: number }[]>([]);
+  const [audioTracks, setAudioTracks] = useState<{ id: number; language: string }[]>([]);
+  const [textTracks, setTextTracks] = useState<{ id: number; language: string }[]>([]);
+  const [pipSupported, setPipSupported] = useState(false);
   const saveProgress = useCallback(async () => {
     if (!video.current || !played.current) {
       return;
@@ -93,6 +105,9 @@ export function Player({
           element.src = source.url;
         } else {
           const shakaModule = await import('shaka-player');
+          if (disposed) {
+            return;
+          }
           const PlayerClass = shakaModule.default.Player;
           if (!PlayerClass.isBrowserSupported()) {
             setError(t('unsupported'));
@@ -101,11 +116,39 @@ export function Player({
           const player = new PlayerClass();
           shaka.current = player;
           await player.attach(element);
+          if (disposed) {
+            return;
+          }
           await player.load(source.url);
+          if (disposed) {
+            return;
+          }
+          if (!disposed) {
+            setQualities(
+              player
+                .getVariantTracks()
+                .filter((track) => typeof track.height === 'number' && track.height > 0)
+                .map((track) => ({ id: track.id, height: track.height ?? 0 })),
+            );
+            setAudioTracks(
+              player
+                .getAudioTracks()
+                .filter((track) => track.id !== undefined)
+                .map((track) => ({ id: track.id!, language: track.language })),
+            );
+            setTextTracks(
+              player.getTextTracks().map((track) => ({ id: track.id, language: track.language })),
+            );
+          }
+        }
+        if (disposed) {
+          return;
         }
         if (position && type !== 'live') {
           element.currentTime = position;
         }
+        element.playbackRate = type === 'live' ? 1 : preferredSpeed;
+        setPipSupported(document.pictureInPictureEnabled && !element.disablePictureInPicture);
         if (!disposed) {
           try {
             await element.play();
@@ -136,7 +179,7 @@ export function Player({
         void player.destroy().catch(() => console.error('Could not dispose player'));
       }
     };
-  }, [id, position, retry, saveProgress, t, type]);
+  }, [id, position, preferredSpeed, retry, saveProgress, t, type]);
   useEffect(() => {
     if (countdown === null || countdown <= 0) {
       return;
@@ -156,7 +199,10 @@ export function Player({
   }
   const control = 'rounded-lg p-2 text-foreground hover:bg-elevated';
   return (
-    <div className={`flex flex-col bg-background ${compact ? '' : 'min-h-screen'}`}>
+    <div
+      ref={frame}
+      className={`flex flex-col bg-background ${compact ? '' : 'min-h-screen'} [\&:fullscreen]:h-screen [\&:fullscreen]:justify-between`}
+    >
       <div className="flex h-16 items-center gap-4 px-4 md:px-8">
         <button
           onClick={() => {
@@ -197,7 +243,7 @@ export function Player({
           onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
           onEnded={() => {
             void saveProgress();
-            if (nextId) {
+            if (nextId && autoNext) {
               setCountdown(10);
             }
           }}
@@ -243,20 +289,21 @@ export function Player({
         )}
       </div>
       <div className="mx-auto w-full max-w-5xl px-4 py-4">
-        <input
-          type="range"
-          aria-label={t('title')}
-          className="w-full accent-primary"
-          min="0"
-          max={Number.isFinite(duration) && duration > 0 ? duration : 1}
-          value={Math.min(current, duration || 1)}
-          disabled={type === 'live'}
-          onChange={(event) => {
-            if (video.current) {
-              video.current.currentTime = Number(event.target.value);
-            }
-          }}
-        />
+        {type !== 'live' && (
+          <input
+            type="range"
+            aria-label={t('title')}
+            className="w-full accent-primary"
+            min="0"
+            max={Number.isFinite(duration) && duration > 0 ? duration : 1}
+            value={Math.min(current, duration || 1)}
+            onChange={(event) => {
+              if (video.current) {
+                video.current.currentTime = Number(event.target.value);
+              }
+            }}
+          />
+        )}
         <div className="flex items-center gap-1">
           <button
             className={control}
@@ -314,12 +361,15 @@ export function Player({
             min="0"
             max="1"
             step="0.05"
-            aria-label="Volume"
-            defaultValue="1"
-            className="w-20 accent-primary"
+            aria-label={t('volume')}
+            value={volume}
+            className="w-20 accent-primary sm:w-28"
             onChange={(event) => {
+              setVolume(Number(event.target.value));
               if (video.current) {
                 video.current.volume = Number(event.target.value);
+                video.current.muted = false;
+                setMuted(false);
               }
             }}
           />
@@ -329,10 +379,123 @@ export function Player({
           <button
             className={control}
             aria-label={t('fullscreen')}
-            onClick={() => void video.current?.requestFullscreen()}
+            onClick={() => void frame.current?.requestFullscreen()}
           >
             <Maximize />
           </button>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted">
+          {qualities.length > 1 && (
+            <label className="flex items-center gap-2">
+              {t('quality')}
+              <select
+                aria-label={t('quality')}
+                className="rounded bg-elevated px-2 py-1"
+                defaultValue=""
+                onChange={(event) => {
+                  const player = shaka.current;
+                  if (!player) {
+                    return;
+                  }
+                  player.configure({ abr: { enabled: !event.target.value } });
+                  const track = player
+                    .getVariantTracks()
+                    .find((item) => item.id === Number(event.target.value));
+                  if (track) {
+                    player.selectVariantTrack(track);
+                  }
+                }}
+              >
+                <option value="">{t('auto')}</option>
+                {qualities.map((track) => (
+                  <option key={track.id} value={track.id}>
+                    {track.height}p
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {audioTracks.length > 1 && (
+            <label className="flex items-center gap-2">
+              {t('audio')}
+              <select
+                aria-label={t('audio')}
+                className="rounded bg-elevated px-2 py-1"
+                onChange={(event) => {
+                  const player = shaka.current;
+                  const track = player
+                    ?.getAudioTracks()
+                    .find((item) => item.id === Number(event.target.value));
+                  if (track) {
+                    player?.selectAudioTrack(track);
+                  }
+                }}
+              >
+                {audioTracks.map((track) => (
+                  <option key={track.id} value={track.id}>
+                    {track.language || t('audio')}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {textTracks.length > 0 && (
+            <label className="flex items-center gap-2">
+              {t('subtitles')}
+              <select
+                aria-label={t('subtitles')}
+                className="rounded bg-elevated px-2 py-1"
+                onChange={(event) => {
+                  const player = shaka.current;
+                  const track = player
+                    ?.getTextTracks()
+                    .find((item) => item.id === Number(event.target.value));
+                  player?.selectTextTrack(track ?? null);
+                }}
+              >
+                <option value="">{t('off')}</option>
+                {textTracks.map((track) => (
+                  <option key={track.id} value={track.id}>
+                    {track.language || t('subtitles')}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {type !== 'live' && (
+            <label className="flex items-center gap-2">
+              {t('speed')}
+              <select
+                aria-label={t('speed')}
+                className="rounded bg-elevated px-2 py-1"
+                defaultValue={preferredSpeed}
+                onChange={(event) => {
+                  if (video.current) {
+                    video.current.playbackRate = Number(event.target.value);
+                  }
+                }}
+              >
+                {[0.75, 1, 1.25, 1.5, 2].map((value) => (
+                  <option key={value} value={value}>
+                    {value}×
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {pipSupported && (
+            <button
+              className="flex items-center gap-1 rounded bg-elevated px-2 py-1"
+              onClick={() => {
+                if (video.current) {
+                  void video.current.requestPictureInPicture().catch(() => setPipSupported(false));
+                }
+              }}
+            >
+              <PictureInPicture2 size={16} />
+              {t('pip')}
+            </button>
+          )}
         </div>
       </div>
     </div>

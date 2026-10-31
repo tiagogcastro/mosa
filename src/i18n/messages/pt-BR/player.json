@@ -19,6 +19,13 @@
     "forward": "Avançar 10 segundos",
     "unsupported": "Formato não suportado neste navegador.",
     "failedTitle": "Não foi possível reproduzir esta transmissão",
-    "retry": "Tentar novamente"
+    "retry": "Tentar novamente",
+    "volume": "Volume",
+    "quality": "Qualidade",
+    "audio": "Áudio",
+    "subtitles": "Legendas",
+    "off": "Desativadas",
+    "auto": "Automática",
+    "speed": "Velocidade"
   }
 }

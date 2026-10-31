@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { providers } from '@/db/schema';
 import { connectionSchema, importConnection } from '@/features/providers/service';
+import { activeProviderId } from '@/features/providers/active';
 import { failure, protectMutation } from '@/lib/security/request';
 export const runtime = 'nodejs';
 export function GET() {
-  return NextResponse.json(
-    db
+  return NextResponse.json({
+    activeId: activeProviderId(),
+    providers: db
       .select({
         id: providers.id,
         name: providers.name,
@@ -16,7 +18,7 @@ export function GET() {
       })
       .from(providers)
       .all(),
-  );
+  });
 }
 export async function POST(request: NextRequest) {
   const denied = protectMutation(request);

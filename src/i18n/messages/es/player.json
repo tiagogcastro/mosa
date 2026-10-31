@@ -19,6 +19,13 @@
     "forward": "Avanzar 10 segundos",
     "unsupported": "Formato no compatible con este navegador.",
     "failedTitle": "No se puede reproducir esta señal",
-    "retry": "Intentar de nuevo"
+    "retry": "Intentar de nuevo",
+    "volume": "Volumen",
+    "quality": "Calidad",
+    "audio": "Audio",
+    "subtitles": "Subtítulos",
+    "off": "Desactivados",
+    "auto": "Automática",
+    "speed": "Velocidad"
   }
 }

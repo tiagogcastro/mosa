@@ -19,6 +19,13 @@
     "forward": "Forward 10 seconds",
     "unsupported": "Format not supported by this browser.",
     "failedTitle": "Unable to play this stream",
-    "retry": "Try again"
+    "retry": "Try again",
+    "volume": "Volume",
+    "quality": "Quality",
+    "audio": "Audio",
+    "subtitles": "Subtitles",
+    "off": "Off",
+    "auto": "Automatic",
+    "speed": "Speed"
   }
 }
