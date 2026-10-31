@@ -29,14 +29,14 @@
     "close": "Fechar",
     "back": "Voltar às configurações",
     "quickCredentials": "Credenciais de mensagem (Xtream)",
-    "pasteCredentials": "Cole a mensagem (interpretada somente neste navegador)",
-    "pasteHint": "Usuário: …\nSenha: …\nCódigo: …\nServidor: https://…",
+    "pasteCredentials": "Cole a mensagem do provedor",
+    "pasteHint": "Usuário: …\nSenha: …\nServidor/DNS: https://… (se informado)",
     "optionalCode": "Código/PIN do aplicativo (opcional; não autentica Xtream)",
     "optionalServer": "URL do servidor autorizado (se conhecida)",
     "savedServer": "Ou use o endereço de uma fonte Xtream já cadastrada",
     "chooseServer": "Selecione uma fonte cadastrada",
     "quickNote": "Use apenas o DNS fornecido pelo provedor; sites de webplayer não são necessariamente servidores Xtream. Sem DNS, selecione uma fonte Xtream já salva. O PIN não é usado nem armazenado.",
-    "quickGuide": "Recebeu uma mensagem com usuário, senha e DNS? Cole-a abaixo: o Mosa preencherá os campos. Sites para assistir no navegador não substituem o DNS.",
+    "quickGuide": "Cole a mensagem com usuário e senha. Para importar, o provedor também precisa informar o DNS/API Xtream ou uma lista M3U.",
     "xtreamGuide": "Use o DNS/API Xtream indicado pelo fornecedor com usuário e senha. Não cole a URL completa da lista M3U aqui.",
     "m3uGuide": "Use a URL completa da lista (get.php com os parâmetros) ou escolha um arquivo .m3u. Listas muito grandes exigem Xtream.",
     "stalkerGuide": "Use somente o endereço do portal e o MAC registrado pelo fornecedor; usuário e senha Xtream não são um MAC.",
@@ -45,6 +45,12 @@
     "connectedCount": "Lista válida: {count} entradas encontradas.",
     "importNote": "A verificação testa as credenciais; salvar também importa o catálogo. A reprodução depende do link, do navegador e da autorização do fornecedor.",
     "liveFormat": "Formato dos canais ao vivo (use TS se a mensagem diz output=ts)",
-    "defaultName": "Minha fonte"
+    "defaultName": "Minha fonte",
+    "advancedOptions": "Opções avançadas · editar dados e servidor",
+    "missingCredentials": "Cole uma mensagem com usuário e senha ou preencha-os nas opções avançadas.",
+    "missingServer": "Falta o DNS/API Xtream da fonte. Solicite ao provedor ou informe um servidor autorizado nas opções avançadas. O endereço do Web Player não serve como servidor.",
+    "webPlayerNotServer": "Se a mensagem só informa um Web Player, solicite o DNS/API Xtream ou uma lista M3U ao provedor. O Web Player não pode ser usado como endereço da fonte.",
+    "messageRecognized": "Usuário, senha e servidor identificados. Confira nas opções avançadas se necessário.",
+    "otherMethods": "Outra forma de conectar (Xtream, M3U ou MAG)"
   }
 }

@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
-import { DemoButton } from '@/features/providers/demo-button';
 import { useRouter } from '@/i18n/navigation';
 import { parseProviderMessage } from '@/features/providers/parse-message';
 
@@ -15,6 +14,10 @@ export function ConnectionForm({ onSuccess }: { onSuccess?: () => void } = {}) {
     'quick',
   );
   const [playlistUrl, setPlaylistUrl] = useState('');
+  const [messageStatus, setMessageStatus] = useState<
+    'empty' | 'ready' | 'missingServer' | 'missingCredentials'
+  >('empty');
+  const advancedRef = useRef<HTMLDetailsElement>(null);
   const [liveFormat, setLiveFormat] = useState<'m3u8' | 'ts'>('m3u8');
   const [savedServers, setSavedServers] = useState<{ id: string; name: string; server: string }[]>(
     [],
@@ -46,6 +49,22 @@ export function ConnectionForm({ onSuccess }: { onSuccess?: () => void } = {}) {
 
     try {
       const form = new FormData(formElement);
+      if (connectionType === 'quick') {
+        if (!form.get('username') || !form.get('password')) {
+          setFeedback(translations('missingCredentials'));
+          if (advancedRef.current) {
+            advancedRef.current.open = true;
+          }
+          return;
+        }
+        if (!form.get('server') && !form.get('serverId')) {
+          setFeedback(translations('missingServer'));
+          if (advancedRef.current) {
+            advancedRef.current.open = true;
+          }
+          return;
+        }
+      }
       const base = { type: connectionType, name: String(form.get('name') || '') };
       const connection =
         connectionType === 'xtream'
@@ -61,7 +80,6 @@ export function ConnectionForm({ onSuccess }: { onSuccess?: () => void } = {}) {
                 ...base,
                 username: String(form.get('username') || ''),
                 password: String(form.get('password') || ''),
-                code: String(form.get('code') || '') || undefined,
                 server: String(form.get('server') || '') || undefined,
                 serverId: String(form.get('serverId') || '') || undefined,
                 liveFormat,
@@ -125,42 +143,19 @@ export function ConnectionForm({ onSuccess }: { onSuccess?: () => void } = {}) {
     'h-11 w-full rounded-lg border border-border bg-background px-4 text-foreground';
 
   return (
-    <>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          void submitConnection(event.currentTarget, false);
-        }}
-        className="grid gap-5 rounded-xl border border-border bg-surface p-6"
-      >
-        <fieldset className="grid gap-3">
-          <legend className="mb-3 text-sm font-semibold">{translations('type')}</legend>
-          <div className="grid grid-cols-2 gap-2">
-            {(['quick', 'xtream', 'm3u', 'stalker'] as const).map((option) => (
-              <button
-                type="button"
-                key={option}
-                aria-pressed={connectionType === option}
-                onClick={() => {
-                  setConnectionType(option);
-                  setFeedback('');
-                }}
-                className={`min-h-16 rounded-lg border p-3 text-left text-sm font-semibold transition-colors ${connectionType === option ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-primary/50 hover:text-foreground'}`}
-              >
-                {option === 'quick'
-                  ? translations('quickCredentials')
-                  : option === 'xtream'
-                    ? 'Xtream Codes'
-                    : option === 'm3u'
-                      ? 'Lista M3U'
-                      : 'Stalker / MAG'}
-              </button>
-            ))}
-          </div>
-          <p className="rounded-lg bg-elevated p-3 text-xs leading-relaxed text-muted">
-            {translations(`${connectionType}Guide`)}
-          </p>
-        </fieldset>
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        void submitConnection(event.currentTarget, false);
+      }}
+      className="grid gap-5 rounded-xl border border-border bg-surface p-6"
+    >
+      {connectionType !== 'quick' && (
+        <p className="text-xs leading-relaxed text-muted">
+          {translations(`${connectionType}Guide`)}
+        </p>
+      )}
+      {connectionType !== 'quick' && (
         <label className="grid gap-2 text-sm">
           {translations('name')}
           <input
@@ -171,183 +166,244 @@ export function ConnectionForm({ onSuccess }: { onSuccess?: () => void } = {}) {
             className={inputClass}
           />
         </label>
+      )}
 
-        {connectionType === 'xtream' ? (
-          <>
-            <label className="grid gap-2 text-sm">
-              {translations('server')}
-              <input name="server" type="url" required className={inputClass} />
-            </label>
-            <label className="grid gap-2 text-sm">
-              {translations('username')}
-              <input name="username" required className={inputClass} />
-            </label>
-            <label className="grid gap-2 text-sm">
-              {translations('password')}
-              <input name="password" type="password" required className={inputClass} />
-            </label>
-            <label className="grid gap-2 text-sm">
-              {translations('liveFormat')}
-              <select
-                value={liveFormat}
-                onChange={(event) => setLiveFormat(event.target.value as 'm3u8' | 'ts')}
-                className={inputClass}
-              >
-                <option value="m3u8">HLS (.m3u8)</option>
-                <option value="ts">MPEG-TS (.ts)</option>
-              </select>
-            </label>
-          </>
-        ) : connectionType === 'quick' ? (
-          <>
-            <label className="grid gap-2 text-sm">
-              {translations('pasteCredentials')}
-              <textarea
-                rows={3}
-                className={`${inputClass} h-auto py-3`}
-                placeholder={translations('pasteHint')}
-                onChange={(event) => {
-                  const form = event.currentTarget.form;
-                  if (!form) {
-                    return;
+      {connectionType === 'xtream' ? (
+        <>
+          <label className="grid gap-2 text-sm">
+            {translations('server')}
+            <input name="server" type="url" required className={inputClass} />
+          </label>
+          <label className="grid gap-2 text-sm">
+            {translations('username')}
+            <input name="username" required className={inputClass} />
+          </label>
+          <label className="grid gap-2 text-sm">
+            {translations('password')}
+            <input name="password" type="password" required className={inputClass} />
+          </label>
+          <label className="grid gap-2 text-sm">
+            {translations('liveFormat')}
+            <select
+              value={liveFormat}
+              onChange={(event) => setLiveFormat(event.target.value as 'm3u8' | 'ts')}
+              className={inputClass}
+            >
+              <option value="m3u8">HLS (.m3u8)</option>
+              <option value="ts">MPEG-TS (.ts)</option>
+            </select>
+          </label>
+        </>
+      ) : connectionType === 'quick' ? (
+        <>
+          <label className="grid gap-2 text-sm">
+            {translations('pasteCredentials')}
+            <textarea
+              rows={4}
+              className={`${inputClass} h-auto py-3`}
+              placeholder={translations('pasteHint')}
+              onChange={(event) => {
+                const form = event.currentTarget.form;
+                if (!form) {
+                  return;
+                }
+                const parsed = parseProviderMessage(event.target.value);
+                for (const key of ['username', 'password', 'server'] as const) {
+                  const input = form.elements.namedItem(key);
+                  if (input instanceof HTMLInputElement) {
+                    input.value = parsed[key] || '';
                   }
-                  const parsed = parseProviderMessage(event.target.value);
-                  for (const key of ['username', 'password', 'code', 'server'] as const) {
-                    const input = form.elements.namedItem(key);
-                    if (input instanceof HTMLInputElement && parsed[key]) {
-                      input.value = parsed[key];
-                    }
-                  }
-                  setPlaylistUrl(parsed.playlist || '');
-                  if (parsed.liveFormat) {
-                    setLiveFormat(parsed.liveFormat);
-                  }
-                }}
-              />
-            </label>
-            {playlistUrl && (
-              <button
-                type="button"
-                className="text-left text-sm font-medium text-primary hover:underline"
-                onClick={() => setConnectionType('m3u')}
-              >
-                {translations('usePastedPlaylist')}
-              </button>
-            )}
-            <label className="grid gap-2 text-sm">
-              {translations('username')}
-              <input name="username" required autoComplete="off" className={inputClass} />
-            </label>
-            <label className="grid gap-2 text-sm">
-              {translations('password')}
-              <input
-                name="password"
-                type="password"
-                required
-                autoComplete="new-password"
-                className={inputClass}
-              />
-            </label>
-            <label className="grid gap-2 text-sm">
-              {translations('optionalCode')}
-              <input name="code" autoComplete="off" className={inputClass} />
-            </label>
-            <label className="grid gap-2 text-sm">
-              {translations('optionalServer')}
-              <input
-                name="server"
-                type="url"
-                placeholder="https://provider.example:8080"
-                className={inputClass}
-              />
-            </label>
-            <label className="grid gap-2 text-sm">
-              {translations('liveFormat')}
-              <select
-                value={liveFormat}
-                onChange={(event) => setLiveFormat(event.target.value as 'm3u8' | 'ts')}
-                className={inputClass}
-              >
-                <option value="m3u8">HLS (.m3u8)</option>
-                <option value="ts">MPEG-TS (.ts)</option>
-              </select>
-            </label>
-            {savedServers.length > 0 && (
-              <label className="grid gap-2 text-sm">
-                {translations('savedServer')}
-                <select name="serverId" className={inputClass}>
-                  <option value="">{translations('chooseServer')}</option>
-                  {savedServers.map((server) => (
-                    <option key={server.id} value={server.id}>
-                      {server.name} · {server.server}
-                    </option>
-                  ))}
+                }
+                setPlaylistUrl(parsed.playlist || '');
+                setMessageStatus(
+                  !event.target.value.trim()
+                    ? 'empty'
+                    : !parsed.username || !parsed.password
+                      ? 'missingCredentials'
+                      : parsed.server
+                        ? 'ready'
+                        : 'missingServer',
+                );
+                if (parsed.liveFormat) {
+                  setLiveFormat(parsed.liveFormat);
+                }
+              }}
+            />
+          </label>
+          {playlistUrl && (
+            <button
+              type="button"
+              className="text-left text-sm font-medium text-primary hover:underline"
+              onClick={() => setConnectionType('m3u')}
+            >
+              {translations('usePastedPlaylist')}
+            </button>
+          )}
+          {messageStatus === 'missingServer' && (
+            <p role="status" className="text-sm text-muted">
+              {translations('webPlayerNotServer')}
+            </p>
+          )}
+          {messageStatus === 'missingCredentials' && (
+            <p role="status" className="text-sm text-muted">
+              {translations('missingCredentials')}
+            </p>
+          )}
+          {messageStatus === 'ready' && (
+            <p role="status" className="text-sm text-primary">
+              {translations('messageRecognized')}
+            </p>
+          )}
+          <details ref={advancedRef} className="rounded-lg border border-border p-3 text-sm">
+            <summary className="cursor-pointer font-medium text-primary">
+              {translations('advancedOptions')}
+            </summary>
+            <div className="mt-4 grid gap-4">
+              <label className="grid gap-2">
+                {translations('username')}
+                <input name="username" autoComplete="off" className={inputClass} />
+              </label>
+              <label className="grid gap-2">
+                {translations('password')}
+                <input
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  className={inputClass}
+                />
+              </label>
+              <label className="grid gap-2">
+                {translations('optionalServer')}
+                <input
+                  name="server"
+                  type="url"
+                  placeholder="https://provider.example:8080"
+                  className={inputClass}
+                />
+              </label>
+              {savedServers.length > 0 && (
+                <label className="grid gap-2">
+                  {translations('savedServer')}
+                  <select name="serverId" className={inputClass}>
+                    <option value="">{translations('chooseServer')}</option>
+                    {savedServers.map((server) => (
+                      <option key={server.id} value={server.id}>
+                        {server.name} · {server.server}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <label className="grid gap-2">
+                {translations('name')}
+                <input
+                  name="name"
+                  required
+                  maxLength={80}
+                  defaultValue={translations('defaultName')}
+                  className={inputClass}
+                />
+              </label>
+              <label className="grid gap-2">
+                {translations('liveFormat')}
+                <select
+                  value={liveFormat}
+                  onChange={(event) => setLiveFormat(event.target.value as 'm3u8' | 'ts')}
+                  className={inputClass}
+                >
+                  <option value="m3u8">HLS (.m3u8)</option>
+                  <option value="ts">MPEG-TS (.ts)</option>
                 </select>
               </label>
-            )}
-            <p className="text-sm text-muted">{translations('quickNote')}</p>
-          </>
-        ) : connectionType === 'stalker' ? (
-          <>
-            <label className="grid gap-2 text-sm">
-              {translations('server')}
-              <input
-                name="server"
-                type="url"
-                required
-                placeholder="https://provider.example/portal.php"
-                className={inputClass}
-              />
-            </label>
-            <label className="grid gap-2 text-sm">
-              {translations('registeredMac')}
-              <input
-                name="mac"
-                required
-                pattern="([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}"
-                placeholder="00:1A:79:XX:XX:XX"
-                autoComplete="off"
-                className={inputClass}
-              />
-            </label>
-            <p className="text-sm text-muted">{translations('stalkerNote')}</p>
-          </>
-        ) : (
-          <>
-            <label className="grid gap-2 text-sm">
-              {translations('playlist')}
-              <input
-                name="url"
-                type="url"
-                defaultValue={playlistUrl}
-                required={!playlistFile}
-                className={inputClass}
-              />
-            </label>
-            <label className="grid gap-2 text-sm">
-              {translations('file')}
-              <input
-                type="file"
-                accept=".m3u,.m3u8,text/plain"
-                className={inputClass}
-                onChange={(event) => setPlaylistFile(event.target.files?.[0] || null)}
-              />
-            </label>
-          </>
-        )}
+            </div>
+          </details>
+        </>
+      ) : connectionType === 'stalker' ? (
+        <>
+          <label className="grid gap-2 text-sm">
+            {translations('server')}
+            <input
+              name="server"
+              type="url"
+              required
+              placeholder="https://provider.example/portal.php"
+              className={inputClass}
+            />
+          </label>
+          <label className="grid gap-2 text-sm">
+            {translations('registeredMac')}
+            <input
+              name="mac"
+              required
+              pattern="([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}"
+              placeholder="00:1A:79:XX:XX:XX"
+              autoComplete="off"
+              className={inputClass}
+            />
+          </label>
+          <p className="text-sm text-muted">{translations('stalkerNote')}</p>
+        </>
+      ) : (
+        <>
+          <label className="grid gap-2 text-sm">
+            {translations('playlist')}
+            <input
+              name="url"
+              type="url"
+              defaultValue={playlistUrl}
+              required={!playlistFile}
+              className={inputClass}
+            />
+          </label>
+          <label className="grid gap-2 text-sm">
+            {translations('file')}
+            <input
+              type="file"
+              accept=".m3u,.m3u8,text/plain"
+              className={inputClass}
+              onChange={(event) => setPlaylistFile(event.target.files?.[0] || null)}
+            />
+          </label>
+        </>
+      )}
 
-        <p className="text-sm text-muted">
-          {translations(connectionType === 'm3u' ? 'limit' : 'importNote')}
+      <details className="text-sm">
+        <summary className="cursor-pointer text-primary">{translations('otherMethods')}</summary>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {(['quick', 'xtream', 'm3u', 'stalker'] as const).map((option) => (
+            <button
+              type="button"
+              key={option}
+              aria-pressed={connectionType === option}
+              onClick={() => {
+                setConnectionType(option);
+                setFeedback('');
+              }}
+              className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${connectionType === option ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-primary/50 hover:text-foreground'}`}
+            >
+              {option === 'quick'
+                ? translations('quickCredentials')
+                : option === 'xtream'
+                  ? 'Xtream Codes'
+                  : option === 'm3u'
+                    ? 'Lista M3U'
+                    : 'Stalker / MAG'}
+            </button>
+          ))}
+        </div>
+      </details>
+
+      {connectionType === 'm3u' && <p className="text-sm text-muted">{translations('limit')}</p>}
+      {feedback && (
+        <p role="status" className="text-sm text-primary">
+          {feedback}
         </p>
-        {feedback && (
-          <p role="status" className="text-sm text-primary">
-            {feedback}
-          </p>
-        )}
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={isBusy}>
-            {isBusy ? translations('importing') : translations('save')}
-          </Button>
+      )}
+      <div className="flex flex-wrap gap-3">
+        <Button type="submit" disabled={isBusy}>
+          {isBusy ? translations('importing') : translations('save')}
+        </Button>
+        {connectionType !== 'quick' && (
           <Button
             type="button"
             variant="secondary"
@@ -361,12 +417,8 @@ export function ConnectionForm({ onSuccess }: { onSuccess?: () => void } = {}) {
           >
             {translations('check')}
           </Button>
-        </div>
-      </form>
-      <div className="mt-8 flex items-center gap-4">
-        <DemoButton />
-        <p className="text-sm text-muted">{translations('demoNote')}</p>
+        )}
       </div>
-    </>
+    </form>
   );
 }
