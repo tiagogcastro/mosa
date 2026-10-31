@@ -13,3 +13,12 @@ Reviewed the public GitHub repository descriptions, license and maintenance meta
 | [Media Chrome](https://github.com/muxinc/media-chrome), [Shaka Player](https://github.com/shaka-project/shaka-player), [hls.js](https://github.com/video-dev/hls.js), [ArtPlayer](https://github.com/zhw2590582/ArtPlayer), [Video.js](https://github.com/videojs/video.js)                    | Media Chrome offers composable controls but currently points new users toward Video.js; retaining Shaka and showing only supported tracks avoids a second playback engine. |
 
 [PWA guidance](https://nextjs.org/docs/app/guides/progressive-web-apps) and the installed Next.js manifest reference were checked before adding install metadata. Installation does not make the local backend or IPTV streams available offline.
+
+## Public playlist follow-up (30 October 2026)
+
+- [iptv-org](https://github.com/iptv-org/iptv) offers country and category M3U files of **live channels**. Its `Movies` category is linear movie channels, not on-demand films or series; imported rows do not prove playback. Availability, permissions, codecs and region vary per stream.
+- [Free-TV/IPTV](https://github.com/Free-TV/IPTV) publishes a [free-TV playlist](https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8) with a free-channel curation policy. The playlist URL responded HTTP 200 and returned ~543 KB during this review; individual channels were **not** tested in a browser. It is also live TV, not an on-demand VOD library.
+- [jromero88/iptv](https://github.com/jromero88/iptv) mentions a separate VOD M3U in its README, but the advertised `VOD.m3u` returned HTTP 404 on inspection. Do not suggest it as a working combined source.
+- [VOD-Org/vod](https://github.com/VOD-Org/vod) advertises legal VOD, but its `index.m3u` contained only `#EXTM3U` when checked. No playable catalog could be confirmed.
+
+**Conclusion:** No responsibly verifiable, maintained, openly licensed single M3U with live channels, on-demand movies **and** episodic series was found. A category named `Movies` does not imply VOD. For realistic combined-content checks, use a provider account explicitly authorized for Xtream/M3U VOD, or create a private playlist with your own permitted media. Never treat catalog import as verification of browser playback or rights.
