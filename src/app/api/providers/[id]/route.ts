@@ -7,6 +7,7 @@ import { encrypt, decrypt } from '@/lib/security/crypto';
 import type { StoredConnection } from '@/features/providers/service';
 import { z } from 'zod';
 import { failure, protectMutation } from '@/lib/security/request';
+import { clearSourceHealth } from '@/features/providers/health';
 export const runtime = 'nodejs';
 export async function DELETE(
   request: NextRequest,
@@ -18,6 +19,7 @@ export async function DELETE(
   }
   const { id } = await params;
   db.delete(providers).where(eq(providers.id, id)).run();
+  clearSourceHealth(id);
   return NextResponse.json({ ok: true });
 }
 export async function PATCH(request: NextRequest, { params }: RouteContext<'/api/providers/[id]'>) {
@@ -98,6 +100,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<'/api
         .set({ name: edit.data.name, encryptedConfig: encrypt(updated) })
         .where(eq(providers.id, id))
         .run();
+      clearSourceHealth(id);
       return NextResponse.json({ ok: true });
     }
     if (
@@ -107,12 +110,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<'/api
       typeof body.enabled === 'boolean'
     ) {
       db.update(providers).set({ enabled: body.enabled }).where(eq(providers.id, id)).run();
+      clearSourceHealth(id);
       return NextResponse.json({ ok: true });
     }
     const result = await refreshProvider(id);
     if (!result.success) {
       return NextResponse.json({ success: false, error: { code: result.error } }, { status: 400 });
     }
+    clearSourceHealth(id);
 
     return NextResponse.json(result.data);
   } catch (error) {

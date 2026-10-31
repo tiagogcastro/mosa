@@ -116,7 +116,7 @@ export function LiveTv({
         <h1 className="font-heading text-3xl font-semibold">{t('live')}</h1>
         <p className="mt-1 text-sm text-muted">{t('importedCount', { count: total })}</p>
       </div>
-      <div className="relative grid min-h-0 min-w-0 flex-1 gap-4 lg:grid-cols-[minmax(260px,280px)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(170px,185px)_minmax(260px,290px)_minmax(0,1fr)]">
+      <div className="relative grid min-h-0 min-w-0 flex-1 gap-4 lg:grid-cols-[minmax(280px,300px)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[clamp(210px,24%,340px)_clamp(290px,29%,380px)_minmax(0,1fr)]">
         <nav
           aria-label={t('allCategories')}
           className={`${showCategories ? 'flex' : 'hidden'} z-10 min-h-0 min-w-0 flex-col overflow-hidden bg-background lg:absolute lg:inset-y-0 lg:left-0 lg:w-48 lg:rounded-xl lg:p-2 lg:shadow-xl xl:static xl:flex xl:w-auto xl:p-0 xl:shadow-none`}
@@ -151,7 +151,7 @@ export function LiveTv({
                     }}
                     aria-current={category === name ? 'page' : undefined}
                     aria-label={`${name || t('allCategories')} · ${count}`}
-                    className={`relative flex min-h-11 min-w-0 items-center gap-2 rounded-lg px-2.5 text-sm ${category === name ? 'bg-elevated font-semibold text-primary before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-primary' : 'text-muted hover:bg-elevated hover:text-foreground'}`}
+                    className={`relative flex min-h-11 min-w-0 items-center gap-2 rounded-lg px-3 text-[15px] ${category === name ? 'bg-elevated font-semibold text-primary before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-primary' : 'text-muted hover:bg-elevated hover:text-foreground'}`}
                   >
                     <Icon size={17} className="shrink-0" />
                     <span className="min-w-0 flex-1 truncate">
@@ -195,7 +195,10 @@ export function LiveTv({
                 aria-label={t('channelSearch')}
                 className="min-w-0 flex-1 bg-transparent py-2.5 text-sm outline-none"
               />
-              <button className="text-xs font-semibold text-primary">{t('filter')}</button>
+              <button className="text-xs font-semibold text-primary" aria-label={t('filter')}>
+                <Search size={16} className="sm:hidden" />
+                <span className="hidden sm:inline">{t('filter')}</span>
+              </button>
             </form>
             <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted">
               <form action="" className="flex min-w-0 items-center gap-2">
@@ -279,7 +282,7 @@ export function LiveTv({
           </div>
         </section>
         <section
-          className="order-first min-h-0 min-w-0 overflow-y-auto overscroll-contain lg:order-none"
+          className={`order-first min-h-0 min-w-0 overflow-visible lg:order-none lg:overflow-y-auto lg:overscroll-contain ${selected && !floating && !suppressInline ? 'sticky top-0 z-20 bg-background lg:static' : ''}`}
           aria-label={t('selectChannel')}
         >
           {selected && !floating && !suppressInline ? (

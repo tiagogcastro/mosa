@@ -28,10 +28,23 @@ function endpoint(config: XtreamConfig, action?: string) {
 async function get(config: XtreamConfig, action?: string, id?: string): Promise<unknown> {
   const url = new URL(endpoint(config, action));
   if (id) {
-    url.searchParams.set('series_id', id);
+    url.searchParams.set(action === 'get_vod_info' ? 'vod_id' : 'series_id', id);
   }
   // Catalog responses can exceed the small playlist/metadata default limit.
-  return JSON.parse(await fetchRemote(url.toString(), action ? 32 * 1024 * 1024 : 8 * 1024 * 1024));
+  const limit =
+    action === 'get_vod_info' ? 1024 * 1024 : action ? 32 * 1024 * 1024 : 8 * 1024 * 1024;
+  return JSON.parse(await fetchRemote(url.toString(), limit));
+}
+export async function xtreamMovieDetails(config: XtreamConfig, vodId: string) {
+  const response = object.parse(await get(config, 'get_vod_info', vodId));
+  const info = object.safeParse(response.info);
+  if (!info.success) {
+    return { description: null, artwork: null };
+  }
+  return {
+    description: (string(info.data.plot) || string(info.data.description)).slice(0, 4000) || null,
+    artwork: string(info.data.movie_image) || string(info.data.cover) || null,
+  };
 }
 export async function xtreamEpisodes(
   config: XtreamConfig,

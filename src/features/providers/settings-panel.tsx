@@ -7,7 +7,6 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { AddProviderModal } from '@/features/providers/add-provider-modal';
-import { QRCodeSVG } from 'qrcode.react';
 import { PairDevice } from '@/features/auth/pair-device';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { ConnectionForm } from '@/features/providers/connection-form';
@@ -15,6 +14,7 @@ import { toast } from 'sonner';
 import { NetworkPanel } from '@/features/settings/network-panel';
 import { ProvisionPanel } from '@/features/providers/provision-panel';
 import { RestrictionsPanel } from '@/features/catalog/restrictions-panel';
+import type { SourceHealth } from '@/features/providers/health';
 
 interface ConnectionSummary {
   id: string;
@@ -55,7 +55,8 @@ export function SettingsPanel({
   initialTheme,
   initialDefaultFormat,
   networkHost,
-  networkStatus,
+  networkProviderId,
+  networkHealth,
   networkFormat,
 }: {
   connections: ConnectionSummary[];
@@ -69,7 +70,8 @@ export function SettingsPanel({
   initialTheme: string;
   initialDefaultFormat: string;
   networkHost: string | null;
-  networkStatus: string | null;
+  networkProviderId: string | null;
+  networkHealth: SourceHealth | null;
   networkFormat: string;
 }) {
   const t = useTranslations('Settings');
@@ -116,8 +118,7 @@ export function SettingsPanel({
       if (!response.ok) {
         throw new Error('Provider unavailable');
       }
-      window.dispatchEvent(new Event('mosa:provider-changed'));
-      router.refresh();
+      window.location.reload();
     } catch {
       setMessage(providerText('invalid'));
     } finally {
@@ -137,8 +138,8 @@ export function SettingsPanel({
         throw new Error('Provider operation failed');
       }
       setEditing(null);
-      router.refresh();
       toast.success(method === 'DELETE' ? t('sourceRemoved') : t('sourceUpdated'));
+      window.location.reload();
     } catch {
       setMessage(providerText('invalid'));
       toast.error(t('operationFailed'));
@@ -298,7 +299,8 @@ export function SettingsPanel({
           {section === 'network' && (
             <NetworkPanel
               providerHost={networkHost}
-              providerStatus={networkStatus}
+              providerId={networkProviderId}
+              initialHealth={networkHealth}
               format={networkFormat}
             />
           )}
@@ -391,7 +393,7 @@ export function SettingsPanel({
         >
           <h2 className="font-heading text-xl font-semibold">{t('providers')}</h2>
           <p className="text-sm text-muted">{t('providerDescription')}</p>
-          <div className="grid gap-3 xl:grid-cols-2">
+          <div className="grid gap-3">
             {[...connections]
               .sort((a, b) => Number(b.id === activeId) - Number(a.id === activeId))
               .map((connection) => (
@@ -581,28 +583,38 @@ export function SettingsPanel({
         >
           <h2 className="font-heading text-xl font-semibold">{t('device')}</h2>
           <p className="text-sm text-muted">{t('deviceDescription')}</p>
-          <div className="flex flex-wrap items-center gap-3 rounded-lg bg-surface px-4 py-3">
-            <code className="min-w-0 break-all text-sm">{deviceId}</code>
+          <PairDevice enabled={pairingEnabled} reachable={pairingReachable} />
+          <div className="rounded-xl border border-border bg-surface p-5">
+            <h3 className="font-heading text-lg font-semibold">{t('sourceProvisionTitle')}</h3>
+            <p className="mt-2 text-sm text-muted">{t('sourceProvisionDescription')}</p>
             <button
-              aria-label={t('copyId')}
-              onClick={() =>
-                void navigator.clipboard
-                  .writeText(deviceId)
-                  .then(() => setMessage(t('copied')))
-                  .catch(() => setMessage(common('error')))
-              }
-              className="ml-auto rounded-lg p-2 text-primary"
+              type="button"
+              onClick={() => setSection('providers')}
+              className="mt-3 min-h-11 rounded-lg bg-elevated px-4 text-sm font-medium text-primary hover:bg-border"
             >
-              <Copy size={18} />
+              {t('goToSources')}
             </button>
           </div>
-          <div className="inline-block rounded-xl bg-white p-4">
-            <QRCodeSVG value={deviceId} size={192} level="M" marginSize={1} />
-          </div>
-          <p className="text-xs text-muted">{t('qrNote')}</p>
-          <p className="text-xs text-muted">{t('macNote')}</p>
-          <p className="rounded-lg bg-elevated p-4 text-sm text-muted">{t('remoteExplanation')}</p>
-          <PairDevice enabled={pairingEnabled} reachable={pairingReachable} />
+          <details className="rounded-xl border border-border bg-surface p-4 text-sm">
+            <summary className="cursor-pointer font-medium text-muted">{t('idTitle')}</summary>
+            <p className="mt-2 text-xs text-muted">{t('macNote')}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <code className="min-w-0 break-all rounded-lg bg-elevated px-3 py-2">{deviceId}</code>
+              <button
+                type="button"
+                aria-label={t('copyId')}
+                onClick={() =>
+                  void navigator.clipboard
+                    .writeText(deviceId)
+                    .then(() => setMessage(t('copied')))
+                    .catch(() => setMessage(common('error')))
+                }
+                className="rounded-lg p-2 text-primary hover:bg-elevated"
+              >
+                <Copy size={18} />
+              </button>
+            </div>
+          </details>
         </section>
         <section
           id="privacy"
@@ -625,10 +637,7 @@ export function SettingsPanel({
           className="max-w-2xl space-y-3"
         >
           <h2 className="font-heading text-xl font-semibold">{t('about')}</h2>
-          <p className="text-sm text-muted">
-            {t('version')} · {t('local')}
-          </p>
-          <p className="text-sm text-muted">{t('pwaNote')}</p>
+          <p className="text-sm text-muted">{t('aboutDescription')}</p>
           <p className="text-sm text-muted">{t('aboutDetails')}</p>
           <p className="text-xs text-muted">{t('copyright')}</p>
         </section>

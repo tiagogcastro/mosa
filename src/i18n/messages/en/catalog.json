@@ -35,6 +35,8 @@
     "untitledProgram": "Untitled program",
     "previousEpisode": "Previous episode",
     "nextEpisode": "Next episode",
-    "episodeProgress": "{percent}% watched"
+    "episodeProgress": "{percent}% watched",
+    "episodeCount": "· {count} episodes",
+    "episodeNumber": "Ep. {number}"
   }
 }

@@ -116,10 +116,14 @@ export function AppShell({
               <button
                 onClick={() => setSearchOpen(true)}
                 aria-label={common('search')}
-                className={`${itemClass(false)} text-xs`}
+                className={itemClass(false)}
               >
                 <Search size={20} strokeWidth={1.9} className="shrink-0" />
-                {!collapsed && <span>{common('search')}</span>}
+                {!collapsed && (
+                  <span className="truncate text-[12px] font-normal tracking-tight">
+                    {common('search')}
+                  </span>
+                )}
               </button>
             </Tooltip>
           </nav>
@@ -153,13 +157,23 @@ export function AppShell({
               <Image src="/brand/symbol.svg" alt="" width={28} height={28} />
               <span className="font-heading text-lg font-semibold">mosa</span>
             </Link>
-            <div className="ml-auto w-40">
+            <div className="ml-auto min-w-0 max-w-40 flex-1">
               <ProfileSwitcher
                 profiles={profiles}
                 activeId={activeProfileId}
                 owner={profileOwner}
               />
             </div>
+            <Tooltip label={navigation('library')}>
+              <Link
+                href="/library"
+                aria-label={navigation('library')}
+                aria-current={pathname === '/library' ? 'page' : undefined}
+                className={`shrink-0 rounded-lg p-2 ${pathname === '/library' ? 'bg-elevated text-primary' : 'text-muted'}`}
+              >
+                <Bookmark size={20} />
+              </Link>
+            </Tooltip>
             <button
               onClick={() => setSearchOpen(true)}
               aria-label={common('search')}
@@ -172,17 +186,21 @@ export function AppShell({
         </main>
         <nav
           aria-label={navigation('brand')}
-          className="fixed inset-x-0 bottom-0 z-30 flex min-h-16 items-center justify-around border-t border-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 flex min-h-14 items-center justify-around border-t border-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden"
         >
-          {links.map(({ href, key, Icon }) => (
+          {[
+            ...links.filter(({ key }) => key !== 'library'),
+            { href: '/settings' as const, key: 'settings' as const, Icon: Settings2 },
+          ].map(({ href, key, Icon }) => (
             <Link
               href={href}
               key={href}
               aria-current={pathname === href ? 'page' : undefined}
-              className={`flex min-h-12 min-w-12 flex-col items-center justify-center gap-1 text-[11px] ${pathname === href ? 'font-semibold text-primary' : 'text-muted'}`}
+              aria-label={navigation(key)}
+              className={`flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[10px] ${pathname === href ? 'font-semibold text-primary' : 'text-muted'}`}
             >
-              <Icon size={20} strokeWidth={1.9} />
-              {navigation(key)}
+              <Icon size={19} strokeWidth={1.9} className="shrink-0" />
+              <span className="max-w-full truncate">{navigation(key)}</span>
             </Link>
           ))}
         </nav>

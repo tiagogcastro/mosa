@@ -35,6 +35,8 @@
     "untitledProgram": "Programa sem título",
     "previousEpisode": "Episódio anterior",
     "nextEpisode": "Próximo episódio",
-    "episodeProgress": "{percent}% assistido"
+    "episodeProgress": "{percent}% assistido",
+    "episodeCount": "· {count} episódios",
+    "episodeNumber": "Ep. {number}"
   }
 }
