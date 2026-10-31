@@ -6,6 +6,7 @@ import type { Metadata } from 'next';
 import { Inter, Outfit } from 'next/font/google';
 import '@/app/globals.css';
 import { preference } from '@/features/settings/preferences';
+import { PersistentPlayer } from '@/features/playback/persistent-player';
 
 const bodyFont = Inter({ variable: '--font-body', subsets: ['latin'] });
 const headingFont = Outfit({ variable: '--font-heading', subsets: ['latin'] });
@@ -35,7 +36,9 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
       className={`${bodyFont.variable} ${headingFont.variable}`}
     >
       <body>
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <PersistentPlayer>{children}</PersistentPlayer>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

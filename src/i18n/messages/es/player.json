@@ -10,7 +10,7 @@
     "playNow": "Reproducir ahora",
     "cancelNext": "Cancelar",
     "fullscreen": "Pantalla completa",
-    "pip": "Imagen en imagen",
+    "pip": "Ventana flotante",
     "mute": "Silenciar",
     "unmute": "Activar sonido",
     "pause": "Pausar",
@@ -26,6 +26,13 @@
     "subtitles": "Subtítulos",
     "off": "Desactivados",
     "auto": "Automática",
-    "speed": "Velocidad"
+    "speed": "Velocidad",
+    "sourceDetail": "La fuente no proporcionó un enlace reproducible. Comprueba la conexión y autorización del proveedor.",
+    "formatDetail": "El navegador rechazó el formato o recurso. MPEG-TS y MKV directos suelen requerir otro reproductor o conversión autorizada.",
+    "networkDetail": "Falló la solicitud de medios. Puede ser red, CORS, acceso denegado, servidor caído o segmento; aquí no se puede identificar cuál.",
+    "manifestDetail": "No se pudo cargar o interpretar el manifiesto. Comprueba el enlace y el formato.",
+    "decodeDetail": "El navegador no pudo decodificar el medio recibido; puede ser el códec o datos dañados.",
+    "unknownDetail": "Se desconoce la causa exacta. Comprueba la fuente, red y compatibilidad del navegador.",
+    "expandPlayer": "Abrir reproductor"
   }
 }

@@ -10,7 +10,7 @@
     "playNow": "Play now",
     "cancelNext": "Cancel",
     "fullscreen": "Fullscreen",
-    "pip": "Picture in picture",
+    "pip": "Floating window",
     "mute": "Mute",
     "unmute": "Unmute",
     "pause": "Pause",
@@ -26,6 +26,13 @@
     "subtitles": "Subtitles",
     "off": "Off",
     "auto": "Automatic",
-    "speed": "Speed"
+    "speed": "Speed",
+    "sourceDetail": "The source did not provide a playable link. Check your connection and provider authorization.",
+    "formatDetail": "The browser rejected this media format or resource. Direct MPEG-TS and MKV often require another player or authorized conversion.",
+    "networkDetail": "The media request failed. Network, CORS, denied access, server downtime or a segment are possible; the browser cannot identify which here.",
+    "manifestDetail": "The stream manifest could not be loaded or parsed. Check the link and format with the source.",
+    "decodeDetail": "The browser could not decode the received media; codec or corrupt data may be involved.",
+    "unknownDetail": "The exact cause is unknown. Check the source, network and browser compatibility.",
+    "expandPlayer": "Open player"
   }
 }

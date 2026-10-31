@@ -12,6 +12,8 @@ import {
   RotateCcw,
   RotateCw,
   Volume2,
+  Volume1,
+  Minimize2,
   VolumeX,
   PictureInPicture2,
 } from 'lucide-react';
@@ -26,6 +28,8 @@ export function Player({
   onClose,
   autoNext = false,
   preferredSpeed = 1,
+  onFloatingChange,
+  onFloat,
 }: {
   id: string;
   title: string;
@@ -36,6 +40,8 @@ export function Player({
   onClose?: () => void;
   autoNext?: boolean;
   preferredSpeed?: number;
+  onFloatingChange?: (value: boolean) => void;
+  onFloat?: () => void;
 }) {
   const frame = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -44,6 +50,7 @@ export function Player({
   const t = useTranslations('Player');
   const router = useRouter();
   const [error, setError] = useState('');
+  const [detail, setDetail] = useState('');
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -83,6 +90,10 @@ export function Player({
     if (!video.current) {
       return;
     }
+    played.current = false;
+    setQualities([]);
+    setAudioTracks([]);
+    setTextTracks([]);
     const element: HTMLVideoElement = video.current;
     async function load() {
       try {
@@ -90,6 +101,7 @@ export function Player({
         const source = (await response.json()) as { url?: string; format?: string };
         if (!response.ok || !source.url) {
           setError(t('unavailable'));
+          setDetail(t('sourceDetail'));
           return;
         }
         if (disposed) {
@@ -100,6 +112,7 @@ export function Player({
         } else if (source.format === 'direct') {
           if (/\.(?:ts|mkv)(?:\?|$)/i.test(source.url)) {
             setError(t('unsupported'));
+            setDetail(t('formatDetail'));
             return;
           }
           element.src = source.url;
@@ -111,6 +124,7 @@ export function Player({
           const PlayerClass = shakaModule.default.Player;
           if (!PlayerClass.isBrowserSupported()) {
             setError(t('unsupported'));
+            setDetail(t('formatDetail'));
             return;
           }
           const player = new PlayerClass();
@@ -156,8 +170,20 @@ export function Player({
             // The visible Play button allows playback after a user gesture.
           }
         }
-      } catch {
+      } catch (failure) {
         if (!disposed) {
+          const category = (failure as { category?: number })?.category;
+          setDetail(
+            t(
+              category === 1
+                ? 'networkDetail'
+                : category === 4
+                  ? 'manifestDetail'
+                  : category === 3
+                    ? 'decodeDetail'
+                    : 'unknownDetail',
+            ),
+          );
           // Shaka/network failures may be caused by CORS, credentials, segments or connectivity.
           // Never display raw errors: they may contain private playback URLs.
           setError(t('error'));
@@ -218,7 +244,9 @@ export function Player({
         >
           <ArrowLeft />
         </button>
-        <h1 className="line-clamp-1 font-heading font-semibold">{title}</h1>
+        <h1 className="min-w-0 break-words font-heading font-semibold [overflow-wrap:anywhere]">
+          {title}
+        </h1>
       </div>
       <div
         className={`relative flex items-center justify-center bg-black ${compact ? 'aspect-video' : 'flex-1'}`}
@@ -247,7 +275,21 @@ export function Player({
               setCountdown(10);
             }
           }}
-          onError={() => setError(t('error'))}
+          onError={(event) => {
+            const code = event.currentTarget.error?.code;
+            setDetail(
+              t(
+                code === 2
+                  ? 'networkDetail'
+                  : code === 3
+                    ? 'decodeDetail'
+                    : code === 4
+                      ? 'formatDetail'
+                      : 'unknownDetail',
+              ),
+            );
+            setError(t('error'));
+          }}
         />
         {error && (
           <div
@@ -257,10 +299,12 @@ export function Player({
             <div className="max-w-md">
               <h2 className="mb-2 font-heading text-xl font-bold">{t('failedTitle')}</h2>
               <p className="text-sm text-muted">{error}</p>
+              {detail && <p className="mt-3 text-xs text-muted">{detail}</p>}
               <button
                 className="mt-5 rounded-lg bg-primary px-5 py-2 font-semibold text-background"
                 onClick={() => {
                   setError('');
+                  setDetail('');
                   setRetry((attempt) => attempt + 1);
                 }}
               >
@@ -304,7 +348,7 @@ export function Player({
             }}
           />
         )}
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <button
             className={control}
             aria-label={playing ? t('pause') : t('play')}
@@ -354,7 +398,7 @@ export function Player({
               }
             }}
           >
-            {muted ? <VolumeX /> : <Volume2 />}
+            {muted || volume === 0 ? <VolumeX /> : volume < 0.5 ? <Volume1 /> : <Volume2 />}
           </button>
           <input
             type="range"
@@ -363,7 +407,8 @@ export function Player({
             step="0.05"
             aria-label={t('volume')}
             value={volume}
-            className="w-20 accent-primary sm:w-28"
+            className="volume-range w-20 sm:w-28"
+            style={{ '--range-progress': `${volume * 100}%` } as React.CSSProperties}
             onChange={(event) => {
               setVolume(Number(event.target.value));
               if (video.current) {
@@ -373,7 +418,7 @@ export function Player({
               }
             }}
           />
-          <span className="ml-auto text-sm tabular-nums text-muted">
+          <span className="ml-auto whitespace-nowrap text-sm tabular-nums text-muted">
             {type === 'live' ? 'LIVE' : `${time(current)} / ${time(duration)}`}
           </span>
           <button
@@ -483,12 +528,28 @@ export function Player({
               </select>
             </label>
           )}
-          {pipSupported && (
+          {compact && onFloatingChange && (
+            <button
+              className={control}
+              aria-label={t('expandPlayer')}
+              onClick={() => onFloatingChange(false)}
+            >
+              <Minimize2 size={18} /> {t('expandPlayer')}
+            </button>
+          )}
+          {(pipSupported || onFloat) && (
             <button
               className="flex items-center gap-1 rounded bg-elevated px-2 py-1"
               onClick={() => {
+                if (onFloat) {
+                  onFloat();
+                  return;
+                }
                 if (video.current) {
-                  void video.current.requestPictureInPicture().catch(() => setPipSupported(false));
+                  void video.current
+                    .requestPictureInPicture()
+                    .then(() => onFloatingChange?.(true))
+                    .catch(() => setPipSupported(false));
                 }
               }}
             >

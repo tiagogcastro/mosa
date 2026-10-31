@@ -10,7 +10,7 @@
     "playNow": "Reproduzir agora",
     "cancelNext": "Cancelar",
     "fullscreen": "Tela cheia",
-    "pip": "Imagem em imagem",
+    "pip": "Janela flutuante",
     "mute": "Silenciar",
     "unmute": "Ativar som",
     "pause": "Pausar",
@@ -26,6 +26,13 @@
     "subtitles": "Legendas",
     "off": "Desativadas",
     "auto": "Automática",
-    "speed": "Velocidade"
+    "speed": "Velocidade",
+    "sourceDetail": "A fonte não forneceu um link reproduzível. Confira a conexão e a autorização do provedor.",
+    "formatDetail": "O navegador rejeitou este formato ou recurso de mídia. MPEG-TS e MKV diretos frequentemente exigem outro player ou conversão autorizada.",
+    "networkDetail": "A solicitação de mídia falhou. Pode ser rede, CORS, acesso negado, servidor indisponível ou um segmento: o navegador não informa qual deles aqui.",
+    "manifestDetail": "O manifesto da transmissão não pôde ser carregado ou interpretado; confirme o link e o formato na fonte.",
+    "decodeDetail": "O navegador não conseguiu decodificar a mídia recebida; codec ou dados corrompidos são possibilidades.",
+    "unknownDetail": "A causa exata não foi identificada. Verifique a fonte, a rede e a compatibilidade do navegador.",
+    "expandPlayer": "Abrir player"
   }
 }

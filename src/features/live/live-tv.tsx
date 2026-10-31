@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation';
 import { MediaArtwork } from '@/components/media/media-artwork';
 import { FavoriteButton } from '@/components/media/favorite-button';
 import { Player } from '@/features/playback/components/player';
+import { usePersistentPlayer } from '@/features/playback/persistent-player';
 import { categoryPresentation } from '@/features/live/category';
 
 type Channel = { id: string; title: string; artwork: string | null; favorite: boolean };
@@ -33,6 +34,7 @@ export function LiveTv({
 }) {
   const t = useTranslations('Catalog');
   const playerText = useTranslations('Player');
+  const { openFloating } = usePersistentPlayer();
   const [selected, setSelected] = useState<Channel | null>(initialChannel);
   const [previous, setPrevious] = useState<Channel | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -231,6 +233,10 @@ export function LiveTv({
                 type="live"
                 compact
                 onClose={() => setSelected(null)}
+                onFloat={() => {
+                  openFloating({ id: selected.id, title: selected.title, type: 'live' });
+                  setSelected(null);
+                }}
               />
               <div className="mt-3 flex min-h-16 flex-wrap items-center justify-between gap-2 px-5 pb-4 text-sm text-muted">
                 <span>{t('unverified')}</span>
