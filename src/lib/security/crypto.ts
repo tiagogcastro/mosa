@@ -16,6 +16,9 @@ function key() {
   }
   return Buffer.from(readFileSync(file, 'utf8').trim(), 'hex');
 }
+export function installationSecret() {
+  return key();
+}
 export function encrypt(value: unknown) {
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', key(), iv);

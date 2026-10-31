@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Maximize2, Move, MoveDiagonal2, X } from 'lucide-react';
+import { Move, MoveDiagonal2, PictureInPicture2, ScanLine, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { Player } from '@/features/playback/components/player';
@@ -15,6 +15,7 @@ type Playback = {
   autoNext?: boolean;
 };
 type PlaybackContext = {
+  floating: boolean;
   open: (item: Playback) => void;
   openFloating: (item: Playback) => void;
   closeOnLeave: (id: string) => void;
@@ -53,6 +54,12 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
   const [floating, setFloating] = useState(false);
   const floatingRef = useRef(false);
   const [bounds, setBounds] = useState<WindowBounds | null>(null);
+  const nativeVideo = useRef<HTMLVideoElement | null>(null);
+  const [externalActive, setExternalActive] = useState(false);
+  const [externalError, setExternalError] = useState(false);
+  const setVideoElement = useCallback((element: HTMLVideoElement | null) => {
+    nativeVideo.current = element;
+  }, []);
   const drag = useRef<{
     mode: 'move' | 'resize';
     x: number;
@@ -70,6 +77,8 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
     (id?: string) => {
       setItem((current) => (!id || current?.id === id ? null : current));
       updateFloating(false);
+      setExternalActive(false);
+      setExternalError(false);
     },
     [updateFloating],
   );
@@ -101,6 +110,32 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
       window.removeEventListener('resize', resize);
     };
   }, [close]);
+  useEffect(() => {
+    const element = nativeVideo.current;
+    if (!element) {
+      return;
+    }
+    const entered = () => {
+      setExternalActive(true);
+      setExternalError(false);
+    };
+    const left = () => setExternalActive(false);
+    element.addEventListener('enterpictureinpicture', entered);
+    element.addEventListener('leavepictureinpicture', left);
+    return () => {
+      element.removeEventListener('enterpictureinpicture', entered);
+      element.removeEventListener('leavepictureinpicture', left);
+    };
+  }, [item?.id]);
+  function externalWindow() {
+    const element = nativeVideo.current;
+    setExternalError(false);
+    if (!element || !document.pictureInPictureEnabled || element.disablePictureInPicture) {
+      setExternalError(true);
+      return;
+    }
+    void element.requestPictureInPicture().catch(() => setExternalError(true));
+  }
   function begin(event: React.PointerEvent<HTMLElement>, mode: 'move' | 'resize') {
     if (!bounds) {
       return;
@@ -134,15 +169,18 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
     }
   }
   return (
-    <Context.Provider value={{ open, openFloating, closeOnLeave, setFloating: updateFloating }}>
+    <Context.Provider
+      value={{ floating, open, openFloating, closeOnLeave, setFloating: updateFloating }}
+    >
       {children}
       {item && (
         <div
           role={floating ? 'region' : undefined}
+          aria-hidden={externalActive || undefined}
           aria-label={floating ? `${t('pip')}: ${item.title}` : undefined}
           className={
             floating
-              ? 'fixed z-40 flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl shadow-black/50'
+              ? `fixed z-40 flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl shadow-black/50 ${externalActive ? 'pointer-events-none opacity-0' : ''}`
               : 'fixed inset-0 z-40 overflow-y-auto bg-background'
           }
           style={
@@ -158,6 +196,7 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
               floating={floating}
               onClose={closePlayer}
               onFloatingChange={updateFloating}
+              onVideoRef={setVideoElement}
             />
           </div>
           {floating && (
@@ -206,11 +245,20 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
               </button>
               <button
                 type="button"
+                aria-label={t('externalPip')}
+                title={t('externalPip')}
+                onClick={externalWindow}
+                className="rounded-md p-1.5 text-primary hover:bg-elevated"
+              >
+                <PictureInPicture2 size={17} />
+              </button>
+              <button
+                type="button"
                 aria-label={t('expandPlayer')}
                 onClick={() => updateFloating(false)}
                 className="rounded-md p-1.5 hover:bg-elevated"
               >
-                <Maximize2 size={16} />
+                <ScanLine size={17} />
               </button>
               <button
                 type="button"
@@ -221,6 +269,11 @@ export function PersistentPlayer({ children }: { children: React.ReactNode }) {
                 <X size={16} />
               </button>
             </div>
+          )}
+          {floating && externalError && (
+            <p role="status" className="order-first bg-surface px-2 py-1 text-xs text-error">
+              {t('externalUnavailable')}
+            </p>
           )}
           {floating && (
             <button

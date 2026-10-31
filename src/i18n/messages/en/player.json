@@ -38,6 +38,8 @@
     "resizePlayer": "Resize window (drag or use arrow keys)",
     "externalPip": "Float over other applications",
     "closeExternalPip": "Close external window",
-    "externalUnavailable": "External window is unavailable in this browser or for this stream."
+    "externalUnavailable": "External window is unavailable in this browser or for this stream.",
+    "live": "Live",
+    "playingInMini": "Playing in the mini player. Select a channel to switch."
   }
 }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type shakaPlayer from 'shaka-player';
+import type mpegts from 'mpegts.js';
 import { useRouter } from '@/i18n/navigation';
 import {
   ArrowLeft,
@@ -16,6 +17,7 @@ import {
   Minimize2,
   VolumeX,
   PictureInPicture2,
+  Radio,
 } from 'lucide-react';
 
 export function Player({
@@ -31,6 +33,7 @@ export function Player({
   onFloatingChange,
   onFloat,
   floating = false,
+  onVideoRef,
 }: {
   id: string;
   title: string;
@@ -44,11 +47,13 @@ export function Player({
   onFloatingChange?: (value: boolean) => void;
   onFloat?: () => void;
   floating?: boolean;
+  onVideoRef?: (element: HTMLVideoElement | null) => void;
 }) {
   const frame = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const played = useRef(false);
   const shaka = useRef<shakaPlayer.Player | null>(null);
+  const transportStream = useRef<ReturnType<typeof mpegts.createPlayer> | null>(null);
   const t = useTranslations('Player');
   const router = useRouter();
   const [error, setError] = useState('');
@@ -60,29 +65,36 @@ export function Player({
   const [countdown, setCountdown] = useState<number | null>(null);
   const [retry, setRetry] = useState(0);
   const [volume, setVolume] = useState(1);
+  useEffect(() => {
+    try {
+      const stored = Number(window.localStorage.getItem('mosa-volume'));
+      if (
+        Number.isFinite(stored) &&
+        stored >= 0 &&
+        stored <= 1 &&
+        window.localStorage.getItem('mosa-volume') !== null
+      ) {
+        requestAnimationFrame(() => {
+          setVolume(stored);
+          if (video.current) {
+            video.current.volume = stored;
+          }
+        });
+      }
+    } catch {
+      // Private browsing can disable local storage; playback remains usable.
+    }
+  }, []);
   const [qualities, setQualities] = useState<{ id: number; height: number }[]>([]);
   const [audioTracks, setAudioTracks] = useState<{ id: number; language: string }[]>([]);
   const [textTracks, setTextTracks] = useState<{ id: number; language: string }[]>([]);
-  const [nativePipAvailable, setNativePipAvailable] = useState(false);
-  const [nativePipActive, setNativePipActive] = useState(false);
-  const [nativePipError, setNativePipError] = useState('');
-  useEffect(() => {
-    const element = video.current;
-    if (!element) {
-      return;
-    }
-    const entered = () => {
-      setNativePipActive(true);
-      setNativePipError('');
-    };
-    const left = () => setNativePipActive(false);
-    element.addEventListener('enterpictureinpicture', entered);
-    element.addEventListener('leavepictureinpicture', left);
-    return () => {
-      element.removeEventListener('enterpictureinpicture', entered);
-      element.removeEventListener('leavepictureinpicture', left);
-    };
-  }, []);
+  const setVideo = useCallback(
+    (element: HTMLVideoElement | null) => {
+      video.current = element;
+      onVideoRef?.(element);
+    },
+    [onVideoRef],
+  );
   const saveProgress = useCallback(async () => {
     if (!video.current || !played.current) {
       return;
@@ -130,12 +142,31 @@ export function Player({
         }
         if (source.format === 'hls' && element.canPlayType('application/vnd.apple.mpegurl')) {
           element.src = source.url;
-        } else if (source.format === 'direct') {
-          if (/\.(?:ts|mkv)(?:\?|$)/i.test(source.url)) {
+        } else if (source.format === 'direct' && /\.ts(?:\?|$)/i.test(source.url)) {
+          const mpegtsLibrary = await import('mpegts.js');
+          if (disposed) {
+            return;
+          }
+          const engine = mpegtsLibrary.default;
+          if (!engine.isSupported()) {
             setError(t('unsupported'));
             setDetail(t('formatDetail'));
             return;
           }
+          const player = engine.createPlayer(
+            { type: 'mpegts', isLive: type === 'live', url: source.url },
+            { isLive: type === 'live', lazyLoad: type !== 'live' },
+          );
+          transportStream.current = player;
+          player.on(engine.Events.ERROR, () => {
+            if (!disposed) {
+              setDetail(t('networkDetail'));
+              setError(t('error'));
+            }
+          });
+          player.attachMediaElement(element);
+          player.load();
+        } else if (source.format === 'direct') {
           element.src = source.url;
         } else {
           const shakaModule = await import('shaka-player');
@@ -183,7 +214,6 @@ export function Player({
           element.currentTime = position;
         }
         element.playbackRate = type === 'live' ? 1 : preferredSpeed;
-        setNativePipAvailable(document.pictureInPictureEnabled && !element.disablePictureInPicture);
         if (!disposed) {
           try {
             await element.play();
@@ -218,6 +248,9 @@ export function Player({
       clearInterval(interval);
       void saveProgress();
       element.pause();
+      const tsPlayer = transportStream.current;
+      transportStream.current = null;
+      tsPlayer?.destroy();
       element.removeAttribute('src');
       element.load();
       const player = shaka.current;
@@ -254,7 +287,7 @@ export function Player({
         className={`relative flex min-h-0 items-center justify-center bg-black ${floating ? 'flex-1' : compact ? 'aspect-video' : 'flex-1'}`}
       >
         <video
-          ref={video}
+          ref={setVideo}
           playsInline
           className="h-full max-h-[75vh] w-full"
           onPlay={() => {
@@ -434,6 +467,11 @@ export function Player({
             style={{ '--range-progress': `${volume * 100}%` } as React.CSSProperties}
             onChange={(event) => {
               setVolume(Number(event.target.value));
+              try {
+                window.localStorage.setItem('mosa-volume', event.target.value);
+              } catch {
+                /* Storage may be unavailable. */
+              }
               if (video.current) {
                 video.current.volume = Number(event.target.value);
                 video.current.muted = false;
@@ -442,34 +480,19 @@ export function Player({
             }}
           />
           <span className="ml-auto whitespace-nowrap text-sm tabular-nums text-muted">
-            {type === 'live' ? 'LIVE' : `${time(current)} / ${time(duration)}`}
+            {type === 'live' ? (
+              <span
+                className="inline-flex items-center gap-1.5 text-error"
+                title={t('live')}
+                aria-label={t('live')}
+              >
+                <span className="h-2 w-2 rounded-full bg-error" />
+                <Radio size={17} />
+              </span>
+            ) : (
+              `${time(current)} / ${time(duration)}`
+            )}
           </span>
-          {floating && (
-            <button
-              className={`${control} disabled:cursor-not-allowed disabled:opacity-40`}
-              disabled={!nativePipAvailable}
-              aria-label={t(nativePipActive ? 'closeExternalPip' : 'externalPip')}
-              title={t(
-                nativePipAvailable
-                  ? nativePipActive
-                    ? 'closeExternalPip'
-                    : 'externalPip'
-                  : 'externalUnavailable',
-              )}
-              aria-pressed={nativePipActive}
-              onClick={() => {
-                if (!video.current) {
-                  return;
-                }
-                const request = nativePipActive
-                  ? document.exitPictureInPicture()
-                  : video.current.requestPictureInPicture();
-                void request.catch(() => setNativePipError(t('externalUnavailable')));
-              }}
-            >
-              <PictureInPicture2 size={19} />
-            </button>
-          )}
           <button
             className={control}
             aria-label={t('fullscreen')}
@@ -478,11 +501,6 @@ export function Player({
             <Maximize />
           </button>
         </div>
-        {floating && nativePipError && (
-          <p role="status" className="text-xs text-error">
-            {nativePipError}
-          </p>
-        )}
         <div
           className={`${floating ? 'hidden' : 'mt-2 flex flex-wrap items-center gap-3 text-xs text-muted'}`}
         >

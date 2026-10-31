@@ -20,6 +20,7 @@
     "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.4",
     "lucide-react": "^1.64.0",
+    "mpegts.js": "^1.8.2",
     "next": "16.4.3",
     "next-intl": "^4.14.9",
     "qrcode.react": "^4.2.0",

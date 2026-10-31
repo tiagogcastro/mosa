@@ -27,6 +27,14 @@
     "stalkerNote": "Informe apenas o MAC atribuído ou autorizado pelo seu provedor. O ID do Mosa não autentica portais. Compatibilidade com outros modelos de portal pode variar.",
     "add": "Adicionar fonte",
     "close": "Fechar",
-    "back": "Voltar às configurações"
+    "back": "Voltar às configurações",
+    "quickCredentials": "Credenciais de mensagem (Xtream)",
+    "pasteCredentials": "Cole a mensagem (interpretada somente neste navegador)",
+    "pasteHint": "Usuário: …\nSenha: …\nCódigo: …\nServidor: https://…",
+    "optionalCode": "Código/PIN do aplicativo (opcional; não autentica Xtream)",
+    "optionalServer": "URL do servidor autorizado (se conhecida)",
+    "savedServer": "Ou use o endereço de uma fonte Xtream já cadastrada",
+    "chooseServer": "Selecione uma fonte cadastrada",
+    "quickNote": "Sem URL, selecione explicitamente um servidor já salvo. Não testamos usuário/senha em domínios desconhecidos. O código não é enviado ao provedor nem armazenado."
   }
 }

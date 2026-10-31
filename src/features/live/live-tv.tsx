@@ -34,8 +34,9 @@ export function LiveTv({
 }) {
   const t = useTranslations('Catalog');
   const playerText = useTranslations('Player');
-  const { openFloating } = usePersistentPlayer();
+  const { openFloating, floating } = usePersistentPlayer();
   const [selected, setSelected] = useState<Channel | null>(initialChannel);
+  const [suppressInline, setSuppressInline] = useState(floating);
   const [previous, setPrevious] = useState<Channel | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [showCategories, setShowCategories] = useState(false);
@@ -43,7 +44,24 @@ export function LiveTv({
   useEffect(() => {
     listRef.current?.scrollTo({ top: 0 });
   }, [page, category, query, sort]);
+  useEffect(() => {
+    const list = listRef.current;
+    const item = Array.from(list?.children ?? []).find(
+      (element) =>
+        element instanceof HTMLElement && element.dataset.channelId === initialChannel?.id,
+    );
+    if (list && item) {
+      const row = item.getBoundingClientRect();
+      const container = list.getBoundingClientRect();
+      list.scrollTop += row.top - container.top - (container.height - row.height) / 2;
+    }
+  }, [initialChannel?.id, page, category]);
   function select(channel: Channel) {
+    if (floating) {
+      openFloating({ id: channel.id, title: channel.title, type: 'live' });
+    } else {
+      setSuppressInline(false);
+    }
     if (selected?.id !== channel.id) {
       setPrevious(selected);
       setSelected(channel);
@@ -198,6 +216,7 @@ export function LiveTv({
               return (
                 <div
                   key={channel.id}
+                  data-channel-id={channel.id}
                   className={`flex min-w-0 items-center gap-1 rounded-lg pr-1 hover:bg-elevated ${selected?.id === channel.id ? 'bg-elevated text-primary' : ''}`}
                 >
                   <button
@@ -224,7 +243,7 @@ export function LiveTv({
           className="order-first min-h-0 min-w-0 overflow-y-auto overscroll-contain lg:order-none"
           aria-label={t('selectChannel')}
         >
-          {selected ? (
+          {selected && !floating && !suppressInline ? (
             <div className="overflow-hidden rounded-xl bg-surface">
               <Player
                 key={selected.id}
@@ -236,6 +255,7 @@ export function LiveTv({
                 onFloat={() => {
                   openFloating({ id: selected.id, title: selected.title, type: 'live' });
                   setSelected(null);
+                  setSuppressInline(true);
                 }}
               />
               <div className="mt-3 flex min-h-16 flex-wrap items-center justify-between gap-2 px-5 pb-4 text-sm text-muted">
@@ -249,7 +269,7 @@ export function LiveTv({
             </div>
           ) : (
             <div className="flex aspect-video items-center justify-center rounded-xl bg-surface p-6 text-center text-muted">
-              {t('selectChannel')}
+              {floating ? playerText('playingInMini') : t('selectChannel')}
             </div>
           )}
         </section>

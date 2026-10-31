@@ -38,6 +38,8 @@
     "resizePlayer": "Redimensionar ventana (arrastra o usa las flechas)",
     "externalPip": "Superponer en otras aplicaciones",
     "closeExternalPip": "Cerrar ventana externa",
-    "externalUnavailable": "La ventana externa no está disponible en este navegador o para esta transmisión."
+    "externalUnavailable": "La ventana externa no está disponible en este navegador o para esta transmisión.",
+    "live": "En vivo",
+    "playingInMini": "Reproduciendo en el minirreproductor. Selecciona un canal para cambiar."
   }
 }

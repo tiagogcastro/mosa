@@ -4,7 +4,7 @@ import { db } from '@/db/client';
 import { providers } from '@/db/schema';
 import { refreshProvider, inspectConnection } from '@/features/providers/service';
 import { encrypt, decrypt } from '@/lib/security/crypto';
-import type { Connection } from '@/features/providers/service';
+import type { StoredConnection } from '@/features/providers/service';
 import { z } from 'zod';
 import { failure, protectMutation } from '@/lib/security/request';
 export const runtime = 'nodejs';
@@ -47,7 +47,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<'/api
       if (!provider || provider.type === 'demo') {
         return NextResponse.json({ error: 'PROVIDER_NOT_FOUND' }, { status: 404 });
       }
-      const stored = decrypt<Connection | { type: 'm3u'; local: true }>(provider.encryptedConfig);
+      const stored = decrypt<StoredConnection | { type: 'm3u'; local: true }>(
+        provider.encryptedConfig,
+      );
       if (
         'local' in stored &&
         (edit.data.server ||

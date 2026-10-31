@@ -14,8 +14,13 @@ export default async function Page({ searchParams }: PageProps<'/[locale]/live'>
   const query = typeof params.q === 'string' ? params.q.slice(0, 100) : '';
   const selected = typeof params.channel === 'string' ? mediaById(params.channel) : null;
   const explicit = selected?.item.type === 'live' ? selected : null;
+  const lastChannel =
+    preference('restore_channel', 'false') === 'true' && !query && !params.category && !params.page
+      ? recentChannels()[0]
+      : null;
+  const chosen = explicit ?? lastChannel;
   const category =
-    explicit?.item.category ?? (typeof params.category === 'string' ? params.category : '');
+    chosen?.item.category ?? (typeof params.category === 'string' ? params.category : '');
   const sort = params.sort === 'recent' ? 'recent' : 'alpha';
   const total = catalogCount('live', query, category);
   const totalPages = Math.max(1, Math.ceil(total / 60));
@@ -23,14 +28,12 @@ export default async function Page({ searchParams }: PageProps<'/[locale]/live'>
   const page =
     Number.isSafeInteger(requested) && params.page !== undefined
       ? Math.min(totalPages, Math.max(1, requested))
-      : explicit && !query
-        ? catalogPageForItem(explicit.item, 60, sort)
+      : chosen && !query
+        ? catalogPageForItem(chosen.item, 60, sort)
         : 1;
-  const lastChannel =
-    preference('restore_channel', 'false') === 'true' ? recentChannels()[0] : null;
   return (
     <LiveTv
-      key={explicit?.item.id ?? 'browse'}
+      key={chosen?.item.id ?? 'browse'}
       channels={catalog('live', query, category, page, 60, sort).map(({ item, favorite }) => ({
         id: item.id,
         title: item.title,
@@ -38,12 +41,12 @@ export default async function Page({ searchParams }: PageProps<'/[locale]/live'>
         favorite: !!favorite,
       }))}
       initialChannel={
-        explicit || lastChannel
+        chosen
           ? {
-              id: (explicit ?? lastChannel)!.item.id,
-              title: (explicit ?? lastChannel)!.item.title,
-              artwork: (explicit ?? lastChannel)!.item.artwork,
-              favorite: !!(explicit ?? lastChannel)!.favorite,
+              id: chosen.item.id,
+              title: chosen.item.title,
+              artwork: chosen.item.artwork,
+              favorite: !!chosen.favorite,
             }
           : null
       }

@@ -5,6 +5,7 @@ import { providers } from '@/db/schema';
 import { SettingsPanel } from '@/features/providers/settings-panel';
 import { activeProviderId } from '@/features/providers/active';
 import { preference, deviceId } from '@/features/settings/preferences';
+import { authEnabled, publicOrigin } from '@/features/auth/service';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,8 @@ export default async function SettingsPage() {
         }))}
         activeId={activeProviderId()}
         deviceId={deviceId()}
+        pairingEnabled={authEnabled()}
+        pairingReachable={!!publicOrigin()}
         initialTimezone={preference('timezone')}
         initialAutoNext={preference('autoplay_next', 'false') === 'true'}
         initialRestoreChannel={preference('restore_channel', 'false') === 'true'}

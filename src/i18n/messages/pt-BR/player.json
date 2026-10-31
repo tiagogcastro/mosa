@@ -38,6 +38,8 @@
     "resizePlayer": "Redimensionar janela (arraste ou use as setas)",
     "externalPip": "Sobrepor em outras aplicações",
     "closeExternalPip": "Fechar janela externa",
-    "externalUnavailable": "Janela externa indisponível neste navegador ou para esta transmissão."
+    "externalUnavailable": "Janela externa indisponível neste navegador ou para esta transmissão.",
+    "live": "Ao vivo",
+    "playingInMini": "Reprodução no mini player. Selecione um canal na lista para trocar."
   }
 }

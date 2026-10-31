@@ -27,6 +27,14 @@
     "stalkerNote": "Enter only a MAC assigned or authorized by your provider. The Mosa Device ID cannot authenticate a portal. Other portal variants may differ.",
     "add": "Add source",
     "close": "Close",
-    "back": "Back to settings"
+    "back": "Back to settings",
+    "quickCredentials": "Message credentials (Xtream)",
+    "pasteCredentials": "Paste message (parsed in this browser only)",
+    "pasteHint": "Username: …\nPassword: …\nCode: …\nServer: https://…",
+    "optionalCode": "App code/PIN (optional; does not authenticate Xtream)",
+    "optionalServer": "Authorized server URL (if known)",
+    "savedServer": "Or use a saved Xtream source address",
+    "chooseServer": "Select saved source",
+    "quickNote": "Without a URL, explicitly select a saved server. We do not probe unknown hosts with your credentials. The code is not sent to the provider or stored."
   }
 }

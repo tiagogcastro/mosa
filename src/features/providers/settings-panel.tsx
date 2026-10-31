@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { AddProviderModal } from '@/features/providers/add-provider-modal';
 import { QRCodeSVG } from 'qrcode.react';
+import { PairDevice } from '@/features/auth/pair-device';
 import { usePathname, useRouter } from '@/i18n/navigation';
 
 interface ConnectionSummary {
@@ -32,6 +33,8 @@ export function SettingsPanel({
   connections,
   activeId,
   deviceId,
+  pairingEnabled,
+  pairingReachable,
   initialTimezone,
   initialAutoNext,
   initialRestoreChannel,
@@ -40,6 +43,8 @@ export function SettingsPanel({
   connections: ConnectionSummary[];
   activeId: string | null;
   deviceId: string;
+  pairingEnabled: boolean;
+  pairingReachable: boolean;
   initialTimezone: string;
   initialAutoNext: boolean;
   initialRestoreChannel: boolean;
@@ -498,6 +503,7 @@ export function SettingsPanel({
           </div>
           <p className="text-xs text-muted">{t('qrNote')}</p>
           <p className="text-xs text-muted">{t('macNote')}</p>
+          <PairDevice enabled={pairingEnabled} reachable={pairingReachable} />
         </section>
         <section
           id="privacy"

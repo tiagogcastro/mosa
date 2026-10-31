@@ -35,6 +35,15 @@ export const connectionSchema = z.discriminatedUnion('type', [
     username: z.string().min(1),
     password: z.string().min(1),
   }),
+  z.object({
+    type: z.literal('quick'),
+    name: z.string().trim().min(1).max(80),
+    username: z.string().trim().min(1).max(256),
+    password: z.string().min(1).max(256),
+    code: z.string().trim().max(80).optional(),
+    server: z.url().optional(),
+    serverId: z.string().uuid().optional(),
+  }),
   z
     .object({
       type: z.literal('m3u'),
@@ -48,7 +57,31 @@ export const connectionSchema = z.discriminatedUnion('type', [
     .refine((value) => !!(value.url || value.content), 'Playlist required'),
 ]);
 export type Connection = z.infer<typeof connectionSchema>;
+export type StoredConnection = Exclude<Connection, { type: 'quick' }>;
+function resolveQuick(config: Extract<Connection, { type: 'quick' }>) {
+  const existing = config.serverId
+    ? db.select().from(providers).where(eq(providers.id, config.serverId)).get()
+    : null;
+  if (config.serverId && (!existing || existing.type !== 'xtream')) {
+    throw new Error('Selected server unavailable');
+  }
+  const stored = existing ? decrypt<XtreamConfig>(existing.encryptedConfig) : null;
+  const server = config.server ?? stored?.server;
+  if (!server) {
+    throw new Error('Server URL or explicitly selected source is required');
+  }
+  return {
+    type: 'xtream' as const,
+    name: config.name,
+    server,
+    username: config.username,
+    password: config.password,
+  };
+}
 export async function inspectConnection(config: Connection) {
+  if (config.type === 'quick') {
+    return inspectConnection(resolveQuick(config));
+  }
   if (config.type === 'stalker') {
     const { expiresAt } = await authenticateStalker(config);
     return { status: 'Authenticated', expiration: expiresAt };
@@ -61,6 +94,9 @@ export async function inspectConnection(config: Connection) {
   return { count: items.length };
 }
 export async function importConnection(config: Connection) {
+  if (config.type === 'quick') {
+    return importConnection(resolveQuick(config));
+  }
   let items: ImportItem[];
 
   if (config.type === 'stalker') {
@@ -136,7 +172,7 @@ export async function refreshProvider(providerId: string): Promise<Result<{ coun
   if (!provider || provider.type === 'demo') {
     return { success: false, error: 'PROVIDER_NOT_FOUND' };
   }
-  const config = decrypt<Connection | { local: true }>(provider.encryptedConfig);
+  const config = decrypt<StoredConnection | { local: true }>(provider.encryptedConfig);
   if ('local' in config) {
     return { success: false, error: 'LOCAL_FILE_REQUIRED' };
   }

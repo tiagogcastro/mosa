@@ -67,3 +67,19 @@ export const preferences = sqliteTable('preferences', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
 });
+export const authSessions = sqliteTable('auth_sessions', {
+  tokenHash: text('token_hash').primaryKey(),
+  role: text('role').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+});
+export const pairInvites = sqliteTable('pair_invites', {
+  tokenHash: text('token_hash').primaryKey(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  usedAt: integer('used_at', { mode: 'timestamp' }),
+});
+export const authAttempts = sqliteTable('auth_attempts', {
+  key: text('key').primaryKey(),
+  failures: integer('failures').notNull(),
+  resetAt: integer('reset_at', { mode: 'timestamp' }).notNull(),
+});
