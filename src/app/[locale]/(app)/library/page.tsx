@@ -9,8 +9,8 @@ export default async function Page() {
   return (
     <>
       <h1 className="mb-8 text-3xl font-bold">{t('library')}</h1>
-      <MediaSection title={t('continue')} items={continuing()} />
-      <MediaSection title={h('recent')} items={recentChannels()} />
+      <MediaSection title={t('continue')} items={continuing()} rail />
+      <MediaSection title={h('recent')} items={recentChannels()} rail />
       <MediaSection title={t('live')} items={favorites.filter((row) => row.item.type === 'live')} />
       <MediaSection
         title={t('movies')}

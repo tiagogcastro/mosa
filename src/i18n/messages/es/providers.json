@@ -24,6 +24,9 @@
     "disable": "Desactivar",
     "enable": "Activar",
     "registeredMac": "MAC registrado por el proveedor",
-    "stalkerNote": "Introduce solo un MAC asignado o autorizado por tu proveedor. El ID de Mosa no autentica portales. La compatibilidad puede variar."
+    "stalkerNote": "Introduce solo un MAC asignado o autorizado por tu proveedor. El ID de Mosa no autentica portales. La compatibilidad puede variar.",
+    "add": "Agregar fuente",
+    "close": "Cerrar",
+    "back": "Volver a configuración"
   }
 }

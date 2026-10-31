@@ -10,18 +10,22 @@
   --border: #28374a;
   --error: #e58b91;
   --success: #78c6a3;
+  --scroll-track: #111925;
+  --scroll-thumb: #35475e;
 }
 
 [data-theme='light'] {
-  --background: #f4f6fa;
-  --sidebar: #ffffff;
+  --background: #f5f7f9;
+  --sidebar: #f9fafb;
   --surface: #ffffff;
-  --surface-elevated: #e9eef6;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --foreground: #0f172a;
-  --foreground-muted: #64748b;
-  --border: #cbd5e1;
+  --surface-elevated: #eaf0f5;
+  --primary: #315f99;
+  --primary-hover: #244c7e;
+  --foreground: #25334a;
+  --foreground-muted: #596b7d;
+  --border: #dce4eb;
   --error: #dc2626;
   --success: #16a34a;
+  --scroll-track: #eef2f5;
+  --scroll-thumb: #bdcbd8;
 }

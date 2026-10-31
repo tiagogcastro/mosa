@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Copy, ExternalLink } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Link, usePathname, useRouter } from '@/i18n/navigation';
+import { AddProviderModal } from '@/features/providers/add-provider-modal';
+import { QRCodeSVG } from 'qrcode.react';
+import { usePathname, useRouter } from '@/i18n/navigation';
 
 interface ConnectionSummary {
   id: string;
@@ -85,6 +87,7 @@ export function SettingsPanel({
       if (!response.ok) {
         throw new Error('Provider unavailable');
       }
+      window.dispatchEvent(new Event('mosa:provider-changed'));
       router.refresh();
     } catch {
       setMessage(providerText('invalid'));
@@ -289,183 +292,182 @@ export function SettingsPanel({
           <h2 className="font-heading text-xl font-semibold">{t('providers')}</h2>
           <p className="text-sm text-muted">{t('providerDescription')}</p>
           <div className="grid gap-3 xl:grid-cols-2">
-            {connections.map((connection) => (
-              <div
-                key={connection.id}
-                className={`min-w-0 rounded-xl p-4 ${activeId === connection.id ? 'bg-elevated ring-1 ring-primary/45' : 'bg-surface'}`}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="truncate font-heading text-lg font-semibold">
-                      {connection.name}
-                    </h3>
-                    <p className="mt-1 text-xs text-muted">
-                      {connection.type.toUpperCase()} ·{' '}
-                      {connection.syncedAt
-                        ? new Intl.DateTimeFormat(locale, {
-                            dateStyle: 'medium',
-                            timeZone: timezone || undefined,
-                          }).format(new Date(connection.syncedAt))
-                        : t('neverSynced')}
-                    </p>
+            {[...connections]
+              .sort((a, b) => Number(b.id === activeId) - Number(a.id === activeId))
+              .map((connection) => (
+                <div
+                  key={connection.id}
+                  className={`min-w-0 rounded-xl p-4 ${activeId === connection.id ? 'bg-elevated ring-1 ring-primary/45' : 'bg-surface'}`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words font-heading text-lg font-semibold [overflow-wrap:anywhere]">
+                        {connection.name}
+                      </h3>
+                      <p className="mt-1 text-xs text-muted">
+                        {connection.type.toUpperCase()} ·{' '}
+                        {connection.syncedAt
+                          ? new Intl.DateTimeFormat(locale, {
+                              dateStyle: 'medium',
+                              timeZone: timezone || undefined,
+                            }).format(new Date(connection.syncedAt))
+                          : t('neverSynced')}
+                      </p>
+                    </div>
+                    {activeId === connection.id && (
+                      <span className="flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
+                        <Check size={14} />
+                        {t('active')}
+                      </span>
+                    )}
                   </div>
-                  {activeId === connection.id && (
-                    <span className="flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
-                      <Check size={14} />
-                      {t('active')}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {activeId !== connection.id && connection.enabled && (
-                    <Button
-                      variant="primary"
-                      disabled={busy}
-                      onClick={() => void changeProvider(connection.id)}
-                    >
-                      {t('selectProvider')}
-                    </Button>
-                  )}
-                  <Button
-                    variant="secondary"
-                    disabled={busy}
-                    onClick={() => setEditing(editing === connection.id ? null : connection.id)}
-                  >
-                    {t('edit')}
-                  </Button>
-                  {connection.type !== 'demo' && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {activeId !== connection.id && connection.enabled && (
+                      <Button
+                        variant="primary"
+                        disabled={busy}
+                        onClick={() => void changeProvider(connection.id)}
+                      >
+                        {t('selectProvider')}
+                      </Button>
+                    )}
                     <Button
                       variant="secondary"
                       disabled={busy}
-                      onClick={() => void updateProvider(connection.id, 'PATCH', {})}
+                      onClick={() => setEditing(editing === connection.id ? null : connection.id)}
                     >
-                      {providerText('refresh')}
+                      {t('edit')}
                     </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    disabled={busy}
-                    onClick={() =>
-                      void updateProvider(connection.id, 'PATCH', { enabled: !connection.enabled })
-                    }
-                  >
-                    {connection.enabled ? providerText('disable') : providerText('enable')}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="text-error hover:bg-error/10 hover:text-error"
-                    disabled={busy}
-                    onClick={() => {
-                      if (window.confirm(t('confirmRemove', { name: connection.name }))) {
-                        void updateProvider(connection.id, 'DELETE');
+                    {connection.type !== 'demo' && (
+                      <Button
+                        variant="secondary"
+                        disabled={busy}
+                        onClick={() => void updateProvider(connection.id, 'PATCH', {})}
+                      >
+                        {providerText('refresh')}
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() =>
+                        void updateProvider(connection.id, 'PATCH', {
+                          enabled: !connection.enabled,
+                        })
                       }
-                    }}
-                  >
-                    {providerText('remove')}
-                  </Button>
-                </div>
-                {editing === connection.id && (
-                  <form
-                    className="mt-5 grid gap-3 border-t border-border pt-4"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      const form = new FormData(event.currentTarget);
-                      void updateProvider(connection.id, 'PATCH', {
-                        action: 'edit',
-                        name: form.get('name'),
-                        server: form.get('server') || undefined,
-                        username: form.get('username') || undefined,
-                        password: form.get('password') || undefined,
-                        url: form.get('url') || undefined,
-                        mac: form.get('mac') || undefined,
-                      });
-                    }}
-                  >
-                    <label className="text-sm">
-                      {providerText('name')}
-                      <input
-                        name="name"
-                        required
-                        maxLength={80}
-                        defaultValue={connection.name}
-                        className={field}
-                      />
-                    </label>
-                    {connection.type === 'xtream' && (
-                      <>
-                        <label className="text-sm">
-                          {providerText('server')}
-                          <input
-                            name="server"
-                            type="url"
-                            placeholder={t('unchanged')}
-                            className={field}
-                          />
-                        </label>
-                        <label className="text-sm">
-                          {providerText('username')}
-                          <input name="username" placeholder={t('unchanged')} className={field} />
-                        </label>
-                        <label className="text-sm">
-                          {providerText('password')}
-                          <input
-                            name="password"
-                            type="password"
-                            autoComplete="new-password"
-                            placeholder={t('unchanged')}
-                            className={field}
-                          />
-                        </label>
-                      </>
-                    )}
-                    {connection.type === 'stalker' && (
-                      <>
-                        <label className="text-sm">
-                          {providerText('server')}
-                          <input
-                            name="server"
-                            type="url"
-                            placeholder={t('unchanged')}
-                            className={field}
-                          />
-                        </label>
-                        <label className="text-sm">
-                          {providerText('registeredMac')}
-                          <input
-                            name="mac"
-                            pattern="([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}"
-                            placeholder={t('unchanged')}
-                            autoComplete="off"
-                            className={field}
-                          />
-                        </label>
-                      </>
-                    )}
-                    {connection.type === 'm3u' && (
+                    >
+                      {connection.enabled ? providerText('disable') : providerText('enable')}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="text-error hover:bg-error/10 hover:text-error"
+                      disabled={busy}
+                      onClick={() => {
+                        if (window.confirm(t('confirmRemove', { name: connection.name }))) {
+                          void updateProvider(connection.id, 'DELETE');
+                        }
+                      }}
+                    >
+                      {providerText('remove')}
+                    </Button>
+                  </div>
+                  {editing === connection.id && (
+                    <form
+                      className="mt-5 grid gap-3 border-t border-border pt-4"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const form = new FormData(event.currentTarget);
+                        void updateProvider(connection.id, 'PATCH', {
+                          action: 'edit',
+                          name: form.get('name'),
+                          server: form.get('server') || undefined,
+                          username: form.get('username') || undefined,
+                          password: form.get('password') || undefined,
+                          url: form.get('url') || undefined,
+                          mac: form.get('mac') || undefined,
+                        });
+                      }}
+                    >
                       <label className="text-sm">
-                        {providerText('playlist')}
+                        {providerText('name')}
                         <input
-                          name="url"
-                          type="url"
-                          placeholder={t('unchanged')}
+                          name="name"
+                          required
+                          maxLength={80}
+                          defaultValue={connection.name}
                           className={field}
                         />
                       </label>
-                    )}
-                    <Button type="submit" disabled={busy}>
-                      {common('save')}
-                    </Button>
-                  </form>
-                )}
-              </div>
-            ))}
+                      {connection.type === 'xtream' && (
+                        <>
+                          <label className="text-sm">
+                            {providerText('server')}
+                            <input
+                              name="server"
+                              type="url"
+                              placeholder={t('unchanged')}
+                              className={field}
+                            />
+                          </label>
+                          <label className="text-sm">
+                            {providerText('username')}
+                            <input name="username" placeholder={t('unchanged')} className={field} />
+                          </label>
+                          <label className="text-sm">
+                            {providerText('password')}
+                            <input
+                              name="password"
+                              type="password"
+                              autoComplete="new-password"
+                              placeholder={t('unchanged')}
+                              className={field}
+                            />
+                          </label>
+                        </>
+                      )}
+                      {connection.type === 'stalker' && (
+                        <>
+                          <label className="text-sm">
+                            {providerText('server')}
+                            <input
+                              name="server"
+                              type="url"
+                              placeholder={t('unchanged')}
+                              className={field}
+                            />
+                          </label>
+                          <label className="text-sm">
+                            {providerText('registeredMac')}
+                            <input
+                              name="mac"
+                              pattern="([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}"
+                              placeholder={t('unchanged')}
+                              autoComplete="off"
+                              className={field}
+                            />
+                          </label>
+                        </>
+                      )}
+                      {connection.type === 'm3u' && (
+                        <label className="text-sm">
+                          {providerText('playlist')}
+                          <input
+                            name="url"
+                            type="url"
+                            placeholder={t('unchanged')}
+                            className={field}
+                          />
+                        </label>
+                      )}
+                      <Button type="submit" disabled={busy}>
+                        {common('save')}
+                      </Button>
+                    </form>
+                  )}
+                </div>
+              ))}
           </div>
-          <Link
-            href="/connect"
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-background"
-          >
-            {providerText('title')} <ExternalLink size={16} />
-          </Link>
+          <AddProviderModal />
         </section>
         <section
           id="device"
@@ -491,6 +493,10 @@ export function SettingsPanel({
               <Copy size={18} />
             </button>
           </div>
+          <div className="inline-block rounded-xl bg-white p-4">
+            <QRCodeSVG value={deviceId} size={192} level="M" marginSize={1} />
+          </div>
+          <p className="text-xs text-muted">{t('qrNote')}</p>
           <p className="text-xs text-muted">{t('macNote')}</p>
         </section>
         <section

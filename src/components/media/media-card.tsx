@@ -1,3 +1,4 @@
+import { Radio, Clapperboard, Film, Tv } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { FavoriteButton } from '@/components/media/favorite-button';
 import { MediaArtwork } from '@/components/media/media-artwork';
@@ -10,12 +11,14 @@ export function MediaCard({
   position,
   duration,
   returnTo,
+  kindLabel,
 }: {
   item: Item;
   favorite: boolean;
   position?: number | null;
   duration?: number | null;
   returnTo?: string;
+  kindLabel: string;
 }) {
   const destination =
     item.type === 'live' || item.type === 'episode'
@@ -25,12 +28,24 @@ export function MediaCard({
     returnTo && item.type !== 'live' && item.type !== 'episode'
       ? `${destination}?from=${encodeURIComponent(returnTo)}`
       : destination;
+  const Icon =
+    item.type === 'live'
+      ? Radio
+      : item.type === 'movie'
+        ? Clapperboard
+        : item.type === 'series'
+          ? Film
+          : Tv;
   return (
     <article className="group relative min-w-0">
       <Link href={href} className="block">
         <div
           className={`relative overflow-hidden rounded-xl border border-border bg-surface ${item.type === 'live' ? 'aspect-video' : 'aspect-[2/3]'}`}
         >
+          <span className="absolute bottom-2 left-2 z-10 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 break-words rounded-md bg-background/90 px-2 py-1 text-[10px] font-bold tracking-wide text-primary backdrop-blur">
+            <Icon size={13} className="shrink-0" />
+            {kindLabel}
+          </span>
           <MediaArtwork title={item.title} artwork={item.artwork} channel={item.type === 'live'} />
           {!!position && !!duration && (
             <div className="absolute inset-x-0 bottom-0 h-1 bg-border">
@@ -41,10 +56,10 @@ export function MediaCard({
             </div>
           )}
         </div>
-        <h3 className="mt-2 line-clamp-2 text-sm font-semibold text-foreground group-hover:text-primary">
+        <h3 className="mt-2 line-clamp-2 break-words text-sm font-semibold text-foreground [overflow-wrap:anywhere] group-hover:text-primary">
           {item.title}
         </h3>
-        <p className="mt-1 truncate text-xs text-muted">
+        <p className="mt-1 line-clamp-2 break-words text-xs text-muted [overflow-wrap:anywhere]">
           {[item.year, item.category].filter(Boolean).join(' · ')}
         </p>
       </Link>

@@ -33,6 +33,8 @@
     "automaticTimezone": "Automático (navegador)",
     "pwaNote": "La instalación requiere un servidor Next.js accesible; el video externo no está disponible sin conexión.",
     "dark": "Tema oscuro",
-    "light": "Tema claro"
+    "light": "Tema claro",
+    "restoreChannel": "Restaurar el último canal al abrir TV",
+    "qrNote": "Este QR contiene solo el ID de esta instalación. No concede acceso ni autentica a nadie; vincular dispositivos requiere un servidor accesible y protegido con códigos temporales."
   }
 }

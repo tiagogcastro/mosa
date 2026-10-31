@@ -24,6 +24,9 @@
     "disable": "Disable",
     "enable": "Enable",
     "registeredMac": "Provider-registered MAC",
-    "stalkerNote": "Enter only a MAC assigned or authorized by your provider. The Mosa Device ID cannot authenticate a portal. Other portal variants may differ."
+    "stalkerNote": "Enter only a MAC assigned or authorized by your provider. The Mosa Device ID cannot authenticate a portal. Other portal variants may differ.",
+    "add": "Add source",
+    "close": "Close",
+    "back": "Back to settings"
   }
 }

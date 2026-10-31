@@ -4,6 +4,7 @@ import { db } from '@/db/client';
 import { providers } from '@/db/schema';
 import { catalog, continuing, recentChannels, saved } from '@/features/catalog/queries';
 import { MediaSection } from '@/components/media/media-section';
+import { AddProviderModal } from '@/features/providers/add-provider-modal';
 import { DemoButton } from '@/features/providers/demo-button';
 import { MediaArtwork } from '@/components/media/media-artwork';
 
@@ -11,6 +12,7 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
   const t = await getTranslations('Home');
   const n = await getTranslations('Navigation');
+  const catalogText = await getTranslations('Catalog');
   const connections = db.select().from(providers).all();
   if (!connections.length) {
     return (
@@ -20,12 +22,7 @@ export default async function Home() {
         <h1 className="font-heading text-4xl font-bold">{t('noProvider')}</h1>
         <p className="mt-4 max-w-lg text-lg text-muted">{t('noProviderText')}</p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            href="/connect"
-            className="rounded-lg bg-primary px-5 py-3 font-semibold text-background"
-          >
-            {n('connect')}
-          </Link>
+          <AddProviderModal />
           <DemoButton />
         </div>
       </div>
@@ -67,14 +64,12 @@ export default async function Home() {
                 {n('live')}
               </Link>
             )}
-            <Link href="/connect" className="rounded-lg bg-elevated px-5 py-2.5">
-              {n('connect')}
-            </Link>
+            <AddProviderModal className="!bg-elevated !text-foreground" />
           </div>
         </div>
       </section>
-      <MediaSection title={t('continue')} items={resume} />
-      <MediaSection title={t('recent')} items={recent} />
+      <MediaSection title={t('continue')} items={resume} rail />
+      <MediaSection title={t('recent')} items={recent} rail />
       <MediaSection
         title={`${t('favorites')} · ${n('live')}`}
         items={favorites.filter(({ item }) => item.type === 'live')}
@@ -87,12 +82,16 @@ export default async function Home() {
         title={`${t('favorites')} · ${n('series')}`}
         items={favorites.filter(({ item }) => item.type === 'series')}
       />
-      <MediaSection
-        title={t('recentlyAdded')}
-        items={[...catalog('movie', '', '', 1, 7), ...catalog('series', '', '', 1, 7)].filter(
-          ({ item }) => !resume.some(({ item: watched }) => watched.id === item.id),
-        )}
-      />
+      {(['movie', 'series'] as const).map((kind) => (
+        <MediaSection
+          key={kind}
+          title={`${t('recentlyAdded')} · ${catalogText(kind === 'movie' ? 'movies' : 'series')}`}
+          rail
+          items={catalog(kind, '', '', 1, 16).filter(
+            ({ item }) => !resume.some(({ item: watched }) => watched.id === item.id),
+          )}
+        />
+      ))}
     </>
   );
 }

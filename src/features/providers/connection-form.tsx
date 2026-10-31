@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { DemoButton } from '@/features/providers/demo-button';
 import { useRouter } from '@/i18n/navigation';
 
-export function ConnectionForm() {
+export function ConnectionForm({ onSuccess }: { onSuccess?: () => void } = {}) {
   const translations = useTranslations('Providers');
   const router = useRouter();
   const [connectionType, setConnectionType] = useState<'xtream' | 'm3u' | 'stalker'>('m3u');
@@ -56,7 +56,10 @@ export function ConnectionForm() {
       if (checkOnly) {
         setFeedback(translations('connected'));
       } else {
-        router.push('/');
+        onSuccess?.();
+        if (!onSuccess) {
+          router.push('/');
+        }
         router.refresh();
       }
     } catch {
