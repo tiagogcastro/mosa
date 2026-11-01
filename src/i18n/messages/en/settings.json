@@ -40,7 +40,7 @@
     "passwordSafety": "The saved password is not loaded until you select the eye icon. Leave blank to keep it.",
     "aboutDescription": "Your TV and video catalog, your way. Mosa brings authorized sources, profiles, favorites and viewing history together in one place to explore and watch.",
     "aboutDetails": "Mosa does not provide subscriptions or streams. Availability and playback depend on the provider, format and browser.",
-    "copyright": "© 2026 Mosa. All rights reserved. Trademarks, artwork and videos belong to their respective owners.",
+    "copyright": "© 2026 Mosa contributors. Source code: MIT License. Trademarks, artwork and videos belong to their respective owners.",
     "showPassword": "Show saved password",
     "hidePassword": "Hide password",
     "revealFailed": "Could not show the password.",

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { MediaArtwork } from '@/components/media/media-artwork';
 import { FavoriteButton } from '@/components/media/favorite-button';
 import { Player } from '@/features/playback/components/player';
@@ -35,6 +35,7 @@ export function LiveTv({
   total: number;
 }) {
   const t = useTranslations('Catalog');
+  const router = useRouter();
   const playerText = useTranslations('Player');
   const { openFloating, floating } = usePersistentPlayer();
   const [selected, setSelected] = useState<Channel | null>(initialChannel);
@@ -61,6 +62,21 @@ export function LiveTv({
     return () => controller.abort();
   }, [selected]);
   const listRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (searchRef.current && document.activeElement !== searchRef.current) {
+      searchRef.current.value = query;
+    }
+  }, [query]);
+  useEffect(
+    () => () => {
+      if (searchTimer.current) {
+        clearTimeout(searchTimer.current);
+      }
+    },
+    [],
+  );
   useEffect(() => {
     listRef.current?.scrollTo({ top: 0 });
   }, [page, category, query, sort]);
@@ -183,14 +199,42 @@ export function LiveTv({
             <form
               className="flex items-center gap-2 rounded-lg bg-surface px-3 focus-within:ring-1 focus-within:ring-primary"
               action=""
-              onSubmit={preservePlayback}
+              onSubmit={() => {
+                if (searchTimer.current) {
+                  clearTimeout(searchTimer.current);
+                }
+                preservePlayback();
+              }}
             >
               <input type="hidden" name="category" value={category} />
               <input type="hidden" name="sort" value={sort} />
               <Search size={17} className="shrink-0 text-muted" />
               <input
+                ref={searchRef}
                 name="q"
                 defaultValue={query}
+                maxLength={100}
+                onChange={(event) => {
+                  const value = event.target.value.trim();
+                  if (searchTimer.current) {
+                    clearTimeout(searchTimer.current);
+                  }
+                  searchTimer.current = setTimeout(() => {
+                    if (value === query) {
+                      return;
+                    }
+                    preservePlayback();
+                    const params = new URLSearchParams();
+                    if (value) {
+                      params.set('q', value);
+                    }
+                    if (category) {
+                      params.set('category', category);
+                    }
+                    params.set('sort', sort);
+                    router.replace(`/live?${params}`);
+                  }, 350);
+                }}
                 placeholder={t('channelSearch')}
                 aria-label={t('channelSearch')}
                 className="min-w-0 flex-1 bg-transparent py-2.5 text-sm outline-none"

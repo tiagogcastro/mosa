@@ -40,7 +40,7 @@
     "passwordSafety": "La contraseña guardada no se carga hasta tocar el icono del ojo. Déjala vacía para conservarla.",
     "aboutDescription": "Tu catálogo de TV y vídeo, a tu manera. Mosa reúne fuentes autorizadas, perfiles, favoritos e historial en un lugar donde descubrir y ver contenido.",
     "aboutDetails": "Mosa no ofrece suscripciones ni transmisiones. La disponibilidad y la reproducción dependen del proveedor, del formato y del navegador.",
-    "copyright": "© 2026 Mosa. Todos los derechos reservados. Las marcas, imágenes y vídeos pertenecen a sus respectivos titulares.",
+    "copyright": "© 2026 colaboradores de Mosa. Código fuente: licencia MIT. Las marcas, imágenes y vídeos pertenecen a sus respectivos titulares.",
     "showPassword": "Mostrar contraseña guardada",
     "hidePassword": "Ocultar contraseña",
     "revealFailed": "No se pudo mostrar la contraseña.",
