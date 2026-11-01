@@ -119,11 +119,7 @@ export function AppShell({
                 className={itemClass(false)}
               >
                 <Search size={20} strokeWidth={1.9} className="shrink-0" />
-                {!collapsed && (
-                  <span className="truncate text-[12px] font-normal tracking-tight">
-                    {common('search')}
-                  </span>
-                )}
+                {!collapsed && <span className="truncate text-sm">{common('search')}</span>}
               </button>
             </Tooltip>
           </nav>

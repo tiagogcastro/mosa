@@ -110,6 +110,28 @@ select {
   font: inherit;
 }
 
+input {
+  --autofill-background: var(--background);
+}
+
+input.bg-surface,
+input.bg-transparent {
+  --autofill-background: var(--surface);
+}
+
+input.bg-elevated {
+  --autofill-background: var(--surface-elevated);
+}
+
+input:autofill,
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--foreground);
+  box-shadow: inset 0 0 0 1000px var(--autofill-background);
+  caret-color: var(--foreground);
+}
+
 button {
   cursor: pointer;
 }

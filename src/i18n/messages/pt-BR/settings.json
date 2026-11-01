@@ -40,7 +40,7 @@
     "passwordSafety": "A senha não é carregada até você tocar no olho. Deixe em branco para mantê-la.",
     "aboutDescription": "Seu catálogo de TV e vídeos, do seu jeito. O Mosa reúne fontes autorizadas, perfis, favoritos e histórico em uma interface para descobrir e assistir.",
     "aboutDetails": "O Mosa não fornece assinaturas ou transmissões. A disponibilidade e a reprodução dependem do provedor, do formato e do navegador.",
-    "copyright": "© 2026 Mosa. Todos os direitos reservados. Marcas, capas e vídeos pertencem aos respectivos titulares.",
+    "copyright": "© 2026 colaboradores do Mosa. Código-fonte: licença MIT. Marcas, capas e vídeos pertencem aos respectivos titulares.",
     "showPassword": "Mostrar senha salva",
     "hidePassword": "Ocultar senha",
     "revealFailed": "Não foi possível mostrar a senha.",

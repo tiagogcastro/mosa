@@ -416,15 +416,76 @@ export function SettingsPanel({
                           : t('neverSynced')}
                       </p>
                     </div>
-                    {activeId === connection.id && (
-                      <span className="flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
-                        <Check size={14} />
-                        {t('active')}
-                      </span>
-                    )}
+                    <div className="ml-auto flex shrink-0 items-center gap-2">
+                      {activeId === connection.id && (
+                        <span className="flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
+                          <Check size={14} />
+                          {t('active')}
+                        </span>
+                      )}
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger asChild>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            aria-label={`${t('actions')}: ${connection.name}`}
+                            className="rounded-lg border border-border p-2 text-muted hover:bg-elevated hover:text-foreground"
+                          >
+                            <MoreHorizontal size={20} />
+                          </button>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Portal>
+                          <DropdownMenu.Content
+                            align="end"
+                            sideOffset={6}
+                            className="z-50 min-w-48 rounded-xl border border-border bg-elevated p-1.5 text-sm text-foreground shadow-2xl"
+                          >
+                            <DropdownMenu.Item
+                              onSelect={() =>
+                                setEditing(editing === connection.id ? null : connection.id)
+                              }
+                              className="cursor-pointer rounded-md px-3 py-2 outline-none focus:bg-primary/15"
+                            >
+                              {t('edit')}
+                            </DropdownMenu.Item>
+                            {connection.type !== 'demo' && (
+                              <DropdownMenu.Item
+                                onSelect={() => void updateProvider(connection.id, 'PATCH', {})}
+                                className="cursor-pointer rounded-md px-3 py-2 outline-none focus:bg-primary/15"
+                              >
+                                {providerText('refresh')}
+                              </DropdownMenu.Item>
+                            )}
+                            <DropdownMenu.Item
+                              onSelect={() =>
+                                void updateProvider(connection.id, 'PATCH', {
+                                  enabled: !connection.enabled,
+                                })
+                              }
+                              className="cursor-pointer rounded-md px-3 py-2 outline-none focus:bg-primary/15"
+                            >
+                              {connection.enabled
+                                ? providerText('disable')
+                                : providerText('enable')}
+                            </DropdownMenu.Item>
+                            <DropdownMenu.Separator className="my-1 h-px bg-border" />
+                            <DropdownMenu.Item
+                              onSelect={() => {
+                                if (window.confirm(t('confirmRemove', { name: connection.name }))) {
+                                  void updateProvider(connection.id, 'DELETE');
+                                }
+                              }}
+                              className="cursor-pointer rounded-md px-3 py-2 text-error outline-none focus:bg-error/10"
+                            >
+                              {providerText('remove')}
+                            </DropdownMenu.Item>
+                          </DropdownMenu.Content>
+                        </DropdownMenu.Portal>
+                      </DropdownMenu.Root>
+                    </div>
                   </div>
-                  <div className="mt-4 flex items-center justify-between gap-2">
-                    {activeId !== connection.id && connection.enabled && (
+                  {activeId !== connection.id && connection.enabled && (
+                    <div className="mt-4">
                       <Button
                         variant="primary"
                         disabled={busy}
@@ -432,65 +493,8 @@ export function SettingsPanel({
                       >
                         {t('selectProvider')}
                       </Button>
-                    )}
-                    <DropdownMenu.Root>
-                      <DropdownMenu.Trigger asChild>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          aria-label={`${t('actions')}: ${connection.name}`}
-                          className="ml-auto rounded-lg border border-border p-2 text-muted hover:bg-elevated hover:text-foreground"
-                        >
-                          <MoreHorizontal size={20} />
-                        </button>
-                      </DropdownMenu.Trigger>
-                      <DropdownMenu.Portal>
-                        <DropdownMenu.Content
-                          align="end"
-                          sideOffset={6}
-                          className="z-50 min-w-48 rounded-xl border border-border bg-elevated p-1.5 text-sm text-foreground shadow-2xl"
-                        >
-                          <DropdownMenu.Item
-                            onSelect={() =>
-                              setEditing(editing === connection.id ? null : connection.id)
-                            }
-                            className="cursor-pointer rounded-md px-3 py-2 outline-none focus:bg-primary/15"
-                          >
-                            {t('edit')}
-                          </DropdownMenu.Item>
-                          {connection.type !== 'demo' && (
-                            <DropdownMenu.Item
-                              onSelect={() => void updateProvider(connection.id, 'PATCH', {})}
-                              className="cursor-pointer rounded-md px-3 py-2 outline-none focus:bg-primary/15"
-                            >
-                              {providerText('refresh')}
-                            </DropdownMenu.Item>
-                          )}
-                          <DropdownMenu.Item
-                            onSelect={() =>
-                              void updateProvider(connection.id, 'PATCH', {
-                                enabled: !connection.enabled,
-                              })
-                            }
-                            className="cursor-pointer rounded-md px-3 py-2 outline-none focus:bg-primary/15"
-                          >
-                            {connection.enabled ? providerText('disable') : providerText('enable')}
-                          </DropdownMenu.Item>
-                          <DropdownMenu.Separator className="my-1 h-px bg-border" />
-                          <DropdownMenu.Item
-                            onSelect={() => {
-                              if (window.confirm(t('confirmRemove', { name: connection.name }))) {
-                                void updateProvider(connection.id, 'DELETE');
-                              }
-                            }}
-                            className="cursor-pointer rounded-md px-3 py-2 text-error outline-none focus:bg-error/10"
-                          >
-                            {providerText('remove')}
-                          </DropdownMenu.Item>
-                        </DropdownMenu.Content>
-                      </DropdownMenu.Portal>
-                    </DropdownMenu.Root>
-                  </div>
+                    </div>
+                  )}
                   {editing === connection.id && ['xtream', 'm3u'].includes(connection.type) && (
                     <div className="mt-5 border-t border-border pt-4">
                       <ConnectionForm
